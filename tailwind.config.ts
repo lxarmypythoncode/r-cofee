@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				coffee: {
+					light: '#E6CCB2',
+					DEFAULT: '#6F4E37',
+					dark: '#3A2718',
+				},
+				cream: '#FFF8E7',
+				mocha: '#B87333',
+				espresso: '#4A2C2A',
+				latte: '#E6CCB2',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,12 +94,22 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'steam': {
+					'0%': { transform: 'translateY(0) translateX(0) scale(1)', opacity: '0' },
+					'50%': { opacity: '0.3' },
+					'100%': { transform: 'translateY(-10px) translateX(-5px) scale(1.3)', opacity: '0' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'steam': 'steam 2s ease-out infinite'
+			},
+			fontFamily: {
+				sans: ['Poppins', 'sans-serif'],
+				serif: ['Playfair Display', 'serif'],
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
