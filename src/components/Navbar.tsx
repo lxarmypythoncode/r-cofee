@@ -1,13 +1,38 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Coffee, Menu, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Coffee, Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import NotificationsMenu from '@/components/NotificationsMenu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Navbar = () => {
   const isMobile = useIsMobile();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+  
+  const handleLogoutClick = () => {
+    logout();
+    navigate('/');
+  };
+  
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
@@ -19,14 +44,17 @@ const Navbar = () => {
 
         {isMobile ? (
           <>
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
+            <div className="flex items-center gap-3">
+              {user && <NotificationsMenu />}
+              <Button 
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
 
             {mobileMenuOpen && (
               <div className="fixed inset-0 top-16 bg-white z-40 p-5">
@@ -59,6 +87,43 @@ const Navbar = () => {
                   >
                     Contact
                   </Link>
+                  
+                  {user ? (
+                    <>
+                      {(user.role === 'admin' || user.role === 'cashier') && (
+                        <Link 
+                          to="/dashboard" 
+                          className="py-2 px-4 text-coffee hover:bg-coffee/5 rounded"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Dashboard
+                        </Link>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        className="w-full flex gap-2 items-center justify-center"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleLogoutClick();
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Logout</span>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full flex gap-2 items-center justify-center"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLoginClick();
+                      }}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Login</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -77,6 +142,36 @@ const Navbar = () => {
             <Link to="/contact" className="font-medium text-coffee hover:text-coffee-dark transition">
               Contact
             </Link>
+            
+            {user && <NotificationsMenu />}
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{user.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {(user.role === 'admin' || user.role === 'cashier') && (
+                    <DropdownMenuItem onClick={handleDashboardClick}>
+                      Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleLogoutClick}>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleLoginClick} className="gap-2">
+                <User className="h-4 w-4" />
+                <span>Login</span>
+              </Button>
+            )}
           </div>
         )}
       </div>

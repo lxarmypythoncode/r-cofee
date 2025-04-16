@@ -10,6 +10,7 @@ export interface Table {
 
 export interface Reservation {
   id: number;
+  userId: number;
   name: string;
   email: string;
   phone: string;
@@ -18,6 +19,7 @@ export interface Reservation {
   guests: number;
   tableId: number;
   specialRequests?: string;
+  status: 'pending' | 'confirmed' | 'finished' | 'cancelled';
   createdAt: string;
 }
 
@@ -36,7 +38,34 @@ const tables: Table[] = [
 ];
 
 // Sample reservations
-let reservations: Reservation[] = [];
+let reservations: Reservation[] = [
+  {
+    id: 1,
+    userId: 3,
+    name: "John Smith",
+    email: "john@example.com",
+    phone: "555-123-4567",
+    date: "2025-04-20",
+    time: "7:00 PM",
+    guests: 2,
+    tableId: 1,
+    status: 'confirmed',
+    createdAt: "2025-04-10T12:00:00.000Z"
+  },
+  {
+    id: 2,
+    userId: 3,
+    name: "Alice Johnson",
+    email: "alice@example.com",
+    phone: "555-987-6543",
+    date: "2025-04-21",
+    time: "6:30 PM",
+    guests: 4,
+    tableId: 3,
+    status: 'pending',
+    createdAt: "2025-04-11T10:30:00.000Z"
+  }
+];
 
 // Get available tables for a specific date and time
 export const getAvailableTables = (date: string, time: string, guests: number): Promise<Table[]> => {
@@ -46,7 +75,7 @@ export const getAvailableTables = (date: string, time: string, guests: number): 
       // Filter tables by capacity and availability
       const availableTables = tables.filter(table => 
         table.capacity >= guests && 
-        !reservations.some(r => r.date === date && r.time === time && r.tableId === table.id)
+        !reservations.some(r => r.date === date && r.time === time && r.tableId === table.id && r.status !== 'cancelled')
       );
       resolve(availableTables);
     }, 300);
@@ -54,12 +83,13 @@ export const getAvailableTables = (date: string, time: string, guests: number): 
 };
 
 // Create a new reservation
-export const createReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt'>): Promise<Reservation> => {
+export const createReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'status'>): Promise<Reservation> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const newReservation: Reservation = {
         ...reservationData,
         id: reservations.length + 1,
+        status: 'pending',
         createdAt: new Date().toISOString()
       };
       
@@ -67,6 +97,45 @@ export const createReservation = (reservationData: Omit<Reservation, 'id' | 'cre
       console.log('New reservation created:', newReservation);
       resolve(newReservation);
     }, 500);
+  });
+};
+
+// Get all reservations
+export const getAllReservations = (): Promise<Reservation[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([...reservations]);
+    }, 300);
+  });
+};
+
+// Get user reservations
+export const getUserReservations = (userId: number): Promise<Reservation[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const userReservations = reservations.filter(r => r.userId === userId);
+      resolve(userReservations);
+    }, 300);
+  });
+};
+
+// Update reservation status
+export const updateReservationStatus = (id: number, status: Reservation['status']): Promise<Reservation> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const index = reservations.findIndex(r => r.id === id);
+      if (index === -1) {
+        reject(new Error('Reservation not found'));
+        return;
+      }
+      
+      reservations[index] = {
+        ...reservations[index],
+        status
+      };
+      
+      resolve(reservations[index]);
+    }, 300);
   });
 };
 
