@@ -13,6 +13,7 @@ import Reservation from "@/pages/Reservation";
 import Contact from "@/pages/Contact";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
+import StaffLogin from "@/pages/StaffLogin";
 import Dashboard from "@/pages/Dashboard";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/reservation" element={<Reservation />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/staff-login" element={<StaffLogin />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

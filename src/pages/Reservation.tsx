@@ -23,10 +23,8 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTimeSlots, getMaxGuestCapacity, getAvailableTables, createReservation, Table } from '@/data/reservationData';
-import { useAuth } from '@/contexts/AuthContext';
 
 const Reservation = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -42,21 +40,9 @@ const Reservation = () => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [step, setStep] = useState<number>(1);
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to make a reservation",
-      });
-      navigate('/login');
-    } else {
-      // Pre-fill form with user info if available
-      setName(user.name || '');
-      setEmail(user.email || '');
-    }
-  }, [user, navigate]);
+  
+  // Assign a default user ID for anonymous customer reservations
+  const defaultUserId = 3; // Using the customer ID from userData
 
   useEffect(() => {
     const fetchTimeSlots = () => {
@@ -123,14 +109,14 @@ const Reservation = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !time || !selectedTable || !user) return;
+    if (!date || !time || !selectedTable) return;
 
     setIsLoading(true);
     const formattedDate = format(date, 'yyyy-MM-dd');
 
     try {
       await createReservation({
-        userId: user.id,
+        userId: defaultUserId, // Using customer ID for all reservations
         name,
         email,
         phone,

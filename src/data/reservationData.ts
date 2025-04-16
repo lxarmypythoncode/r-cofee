@@ -23,18 +23,39 @@ export interface Reservation {
   createdAt: string;
 }
 
-// Sample tables data
+// Tables data (1-50)
 const tables: Table[] = [
-  { id: 1, name: "Window Table 1", capacity: 2, isAvailable: true },
-  { id: 2, name: "Window Table 2", capacity: 2, isAvailable: true },
-  { id: 3, name: "Center Table 1", capacity: 4, isAvailable: true },
-  { id: 4, name: "Center Table 2", capacity: 4, isAvailable: true },
-  { id: 5, name: "Corner Booth 1", capacity: 6, isAvailable: true },
-  { id: 6, name: "Corner Booth 2", capacity: 6, isAvailable: true },
-  { id: 7, name: "Bar Seat 1", capacity: 1, isAvailable: true },
-  { id: 8, name: "Bar Seat 2", capacity: 1, isAvailable: true },
-  { id: 9, name: "Bar Seat 3", capacity: 1, isAvailable: true },
-  { id: 10, name: "Bar Seat 4", capacity: 1, isAvailable: true },
+  // Tables for 2 people
+  ...Array.from({ length: 15 }, (_, i) => ({
+    id: i + 1,
+    name: `Table ${i + 1}`,
+    capacity: 2,
+    isAvailable: true
+  })),
+  
+  // Tables for 4 people
+  ...Array.from({ length: 20 }, (_, i) => ({
+    id: i + 16,
+    name: `Table ${i + 16}`,
+    capacity: 4,
+    isAvailable: true
+  })),
+  
+  // Tables for 6 people
+  ...Array.from({ length: 10 }, (_, i) => ({
+    id: i + 36,
+    name: `Table ${i + 36}`,
+    capacity: 6,
+    isAvailable: true
+  })),
+  
+  // Tables for 8 people
+  ...Array.from({ length: 5 }, (_, i) => ({
+    id: i + 46,
+    name: `Table ${i + 46}`,
+    capacity: 8,
+    isAvailable: true
+  }))
 ];
 
 // Sample reservations
@@ -61,7 +82,7 @@ let reservations: Reservation[] = [
     date: "2025-04-21",
     time: "6:30 PM",
     guests: 4,
-    tableId: 3,
+    tableId: 16,
     status: 'pending',
     createdAt: "2025-04-11T10:30:00.000Z"
   }

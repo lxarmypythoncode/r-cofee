@@ -22,7 +22,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
   const handleLoginClick = () => {
-    navigate('/login');
+    navigate('/staff-login');
   };
   
   const handleLogoutClick = () => {
