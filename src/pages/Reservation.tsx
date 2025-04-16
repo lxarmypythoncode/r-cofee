@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,9 +40,7 @@ const Reservation = () => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [step, setStep] = useState<number>(1);
-  
-  // Assign a default user ID for anonymous customer reservations
-  const defaultUserId = 3; // Using the customer ID from userData
+  const defaultUserId = 3;
 
   useEffect(() => {
     const fetchTimeSlots = () => {
@@ -116,7 +114,7 @@ const Reservation = () => {
 
     try {
       await createReservation({
-        userId: defaultUserId, // Using customer ID for all reservations
+        userId: defaultUserId,
         name,
         email,
         phone,
@@ -132,7 +130,6 @@ const Reservation = () => {
         description: `Your reservation for ${guests} on ${format(date, 'MMMM d, yyyy')} at ${time} has been created. You will receive a confirmation soon.`,
       });
 
-      // Reset form
       setDate(undefined);
       setTime('');
       setGuests(2);
@@ -140,7 +137,6 @@ const Reservation = () => {
       setSelectedTable(null);
       setStep(1);
 
-      // Redirect to confirmation or home page
       navigate('/');
     } catch (error) {
       toast({
@@ -153,10 +149,24 @@ const Reservation = () => {
     }
   };
 
+  const handleBackToLogin = () => {
+    navigate('/login');
+  };
+
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-serif font-bold text-coffee mb-2">Reserve a Table</h1>
+        <div className="flex items-center mb-4">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="mr-4"
+            onClick={handleBackToLogin}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-3xl font-serif font-bold text-coffee">Reserve a Table</h1>
+        </div>
         <p className="text-muted-foreground mb-8">Book your visit to R-Coffee and enjoy premium coffee and cuisine.</p>
 
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
