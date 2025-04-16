@@ -23,6 +23,10 @@ const Login = () => {
     navigate('/register');
   };
 
+  const goToCustomerLogin = () => {
+    navigate('/customer-login');
+  };
+
   return (
     <div className="container mx-auto max-w-md py-12">
       <div className="rounded-lg border bg-card shadow-sm p-8">
@@ -42,6 +46,15 @@ const Login = () => {
           >
             <Users className="mr-2 h-5 w-5" />
             Make a Reservation
+          </Button>
+          
+          <Button 
+            onClick={goToCustomerLogin} 
+            variant="default"
+            className="w-full h-14"
+          >
+            <User className="mr-2 h-5 w-5" />
+            Customer Login
           </Button>
           
           <Button 

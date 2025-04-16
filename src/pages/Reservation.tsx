@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ import { getTimeSlots, getMaxGuestCapacity, getAvailableTables, createReservatio
 const Reservation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState<string>('');
   const [guests, setGuests] = useState<number>(2);
@@ -40,9 +42,17 @@ const Reservation = () => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [step, setStep] = useState<number>(1);
-  const defaultUserId = 3;
+
+  if (!user) {
+    return <Navigate to="/customer-login" />;
+  }
 
   useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+    }
+    
     const fetchTimeSlots = () => {
       const slots = getTimeSlots();
       setTimeSlots(slots);
@@ -55,7 +65,7 @@ const Reservation = () => {
 
     fetchTimeSlots();
     fetchMaxGuests();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const fetchAvailableTables = async () => {
@@ -114,7 +124,7 @@ const Reservation = () => {
 
     try {
       await createReservation({
-        userId: defaultUserId,
+        userId: user.id,
         name,
         email,
         phone,
