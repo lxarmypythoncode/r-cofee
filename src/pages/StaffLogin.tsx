@@ -38,7 +38,7 @@ const StaffLogin = () => {
     try {
       const user = await authenticateUser(email, password);
       
-      if (user && (user.role === 'admin' || user.role === 'cashier')) {
+      if (user && (user.role === 'admin' || user.role === 'cashier' || user.role === 'super_admin')) {
         login(user);
         navigate('/dashboard');
       } else {
@@ -57,17 +57,6 @@ const StaffLogin = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Demo credentials for quick testing
-  const loginAsAdmin = () => {
-    setEmail('admin@rcoffee.com');
-    setPassword('password');
-  };
-
-  const loginAsCashier = () => {
-    setEmail('cashier@rcoffee.com');
-    setPassword('password');
   };
 
   return (
@@ -110,16 +99,12 @@ const StaffLogin = () => {
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? "Logging in..." : "Login"}
             </Button>
+
+            <p className="text-sm text-center text-muted-foreground mt-2">
+              Note: For super admin access, use email: super_admin@rcoffee.com
+            </p>
           </div>
         </form>
-        
-        <div className="mt-6 border-t pt-4">
-          <p className="text-center text-sm text-muted-foreground mb-3">Demo Staff Accounts:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={loginAsAdmin}>Admin</Button>
-            <Button variant="outline" size="sm" onClick={loginAsCashier}>Cashier</Button>
-          </div>
-        </div>
       </div>
     </div>
   );

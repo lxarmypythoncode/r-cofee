@@ -7,14 +7,15 @@ import { hasRole } from '@/data/userData';
 import ReservationsTab from '@/components/dashboard/ReservationsTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import SettingsTab from '@/components/dashboard/SettingsTab';
-import { Clock, Bell, Settings } from 'lucide-react';
+import SuperAdminTab from '@/components/dashboard/SuperAdminTab';
+import { Clock, Bell, Settings, ShieldCheck } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('reservations');
 
-  // If not logged in or not an admin/cashier, redirect to login
-  if (!isLoading && (!user || !(hasRole(user, ['admin', 'cashier'])))) {
+  // If not logged in or not an admin/cashier/super_admin, redirect to login
+  if (!isLoading && (!user || !(hasRole(user, ['admin', 'cashier', 'super_admin'])))) {
     return <Navigate to="/login" />;
   }
 
@@ -31,7 +32,7 @@ const Dashboard = () => {
           <div className="flex flex-col gap-2">
             <div className="px-3 py-2 rounded-md bg-coffee text-white">
               <p className="font-semibold">{user?.name}</p>
-              <p className="text-sm text-coffee-light capitalize">{user?.role}</p>
+              <p className="text-sm text-coffee-light capitalize">{user?.role.replace('_', ' ')}</p>
             </div>
           </div>
         </div>
@@ -53,6 +54,12 @@ const Dashboard = () => {
                   <span>Settings</span>
                 </TabsTrigger>
               )}
+              {user?.role === 'super_admin' && (
+                <TabsTrigger value="super_admin" className="flex gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Super Admin</span>
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="reservations">
@@ -66,6 +73,12 @@ const Dashboard = () => {
             {user?.role === 'admin' && (
               <TabsContent value="settings">
                 <SettingsTab />
+              </TabsContent>
+            )}
+            
+            {user?.role === 'super_admin' && (
+              <TabsContent value="super_admin">
+                <SuperAdminTab />
               </TabsContent>
             )}
           </Tabs>
