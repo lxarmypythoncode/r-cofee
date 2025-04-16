@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { hasRole } from '@/data/userData';
@@ -8,11 +8,13 @@ import ReservationsTab from '@/components/dashboard/ReservationsTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import SettingsTab from '@/components/dashboard/SettingsTab';
 import SuperAdminTab from '@/components/dashboard/SuperAdminTab';
-import { Clock, Bell, Settings, ShieldCheck } from 'lucide-react';
+import { Clock, Bell, Settings, ShieldCheck, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('reservations');
+  const navigate = useNavigate();
 
   // If not logged in or not an admin/cashier/super_admin, redirect to login
   if (!isLoading && (!user || !(hasRole(user, ['admin', 'cashier', 'super_admin'])))) {
@@ -24,11 +26,27 @@ const Dashboard = () => {
     return <div className="container mx-auto py-12 text-center">Loading...</div>;
   }
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/6">
-          <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold">Dashboard</h1>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleLogout} 
+              className="text-muted-foreground hover:text-destructive"
+              title="Logout"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
           <div className="flex flex-col gap-2">
             <div className="px-3 py-2 rounded-md bg-coffee text-white">
               <p className="font-semibold">{user?.name}</p>

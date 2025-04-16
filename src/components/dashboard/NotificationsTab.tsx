@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { format, parseISO } from 'date-fns';
 
 interface NotificationsTabProps {
   userRole: string;
@@ -34,16 +35,19 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedReservation, setSelectedReservation] = useState('');
   const [customers, setCustomers] = useState<{ id: number; name: string; email: string }[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
       try {
-        const reservations = await getAllReservations();
+        const reservationData = await getAllReservations();
+        setReservations(reservationData);
         
         // Create unique list of customers from reservations
-        const uniqueCustomers = reservations.reduce<{ id: number; name: string; email: string }[]>((acc, reservation) => {
+        const uniqueCustomers = reservationData.reduce<{ id: number; name: string; email: string }[]>((acc, reservation) => {
           if (!acc.some(c => c.id === reservation.userId)) {
             acc.push({
               id: reservation.userId,
@@ -58,13 +62,13 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
       } catch (error) {
         toast({
           title: "Error",
-          description: "Failed to load customers",
+          description: "Failed to load data",
           variant: "destructive",
         });
       }
     };
 
-    fetchCustomers();
+    fetchData();
   }, []);
 
   const handleSendNotification = async (e: React.FormEvent) => {
@@ -120,6 +124,22 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
     setMessage('This is a friendly reminder about your upcoming reservation. We look forward to serving you soon!');
   };
 
+  const sendAvailabilityUpdate = () => {
+    setTitle('Reservation Availability Update');
+    setMessage('We want to inform you that we have limited seating available on your reservation date. Please confirm your attendance or reschedule if needed.');
+  };
+
+  const handleReservationSelect = (reservationId: string) => {
+    if (!reservationId) return;
+    
+    const reservation = reservations.find(r => r.id.toString() === reservationId);
+    if (reservation) {
+      setSelectedUserId(reservation.userId.toString());
+      setTitle(`Update on Your Reservation for ${format(parseISO(reservation.date), 'MMM dd')}`);
+      setMessage(`Regarding your reservation for ${reservation.guests} guests on ${format(parseISO(reservation.date), 'MMMM dd, yyyy')} at ${reservation.time}: `);
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Send Notifications</h2>
@@ -134,6 +154,36 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSendNotification} className="space-y-4">
+              {userRole === 'cashier' && (
+                <div className="space-y-2">
+                  <Label htmlFor="reservation">Select a Reservation</Label>
+                  <Select 
+                    value={selectedReservation} 
+                    onValueChange={(value) => {
+                      setSelectedReservation(value);
+                      handleReservationSelect(value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a reservation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Upcoming Reservations</SelectLabel>
+                        {reservations
+                          .filter(r => r.status === 'pending' || r.status === 'confirmed')
+                          .map(reservation => (
+                            <SelectItem key={reservation.id} value={String(reservation.id)}>
+                              {reservation.name} - {format(parseISO(reservation.date), 'MMM dd')} at {reservation.time}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <Label htmlFor="customer">Customer</Label>
                 <Select 
@@ -207,6 +257,13 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
               onClick={sendReminder}
             >
               Reservation Reminder
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start" 
+              onClick={sendAvailabilityUpdate}
+            >
+              Availability Update
             </Button>
           </CardContent>
         </Card>
