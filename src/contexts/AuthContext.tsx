@@ -10,6 +10,8 @@ interface AuthContextType {
   isLoading: boolean;
   isStaff: (user: User | null) => boolean;
   isSuperAdmin: (user: User | null) => boolean;
+  isAdmin: (user: User | null) => boolean;
+  isCashier: (user: User | null) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +79,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user.role === 'super_admin';
   };
 
+  // Helper function to check if user is admin
+  const isAdmin = (user: User | null): boolean => {
+    if (!user) return false;
+    return user.role === 'admin';
+  };
+
+  // Helper function to check if user is cashier
+  const isCashier = (user: User | null): boolean => {
+    if (!user) return false;
+    return user.role === 'cashier';
+  };
+
   const value = {
     user,
     login,
@@ -84,6 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     isStaff,
     isSuperAdmin,
+    isAdmin,
+    isCashier,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

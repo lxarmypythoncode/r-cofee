@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { authenticateUser } from '@/data/userData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Coffee, Key } from 'lucide-react';
+import { Coffee, Key, ArrowLeft } from 'lucide-react';
 
 const StaffLogin = () => {
   const { user, login } = useAuth();
@@ -101,8 +101,19 @@ const StaffLogin = () => {
             </Button>
 
             <p className="text-sm text-center text-muted-foreground mt-2">
-              Note: For super admin access, use email: super_admin@rcoffee.com
+              Note: For super admin login, use email: super_admin@rcoffee.com
             </p>
+            
+            <div className="flex justify-between mt-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="flex items-center gap-1">
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+              
+              <Link to="/cashier-register" className="text-sm text-coffee hover:underline">
+                Register as cashier
+              </Link>
+            </div>
           </div>
         </form>
       </div>

@@ -14,6 +14,7 @@ import Contact from "@/pages/Contact";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
 import StaffLogin from "@/pages/StaffLogin";
+import CashierRegister from "@/pages/CashierRegister";
 import Dashboard from "@/pages/Dashboard";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/staff-login" element={<StaffLogin />} />
+                <Route path="/cashier-register" element={<CashierRegister />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

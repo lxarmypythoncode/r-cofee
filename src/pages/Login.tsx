@@ -1,8 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Coffee, Users } from 'lucide-react';
+import { Coffee, Users, UserPlus } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +13,10 @@ const Login = () => {
 
   const goToStaffLogin = () => {
     navigate('/staff-login');
+  };
+
+  const goToCashierRegister = () => {
+    navigate('/cashier-register');
   };
 
   return (
@@ -43,6 +47,15 @@ const Login = () => {
           >
             <Coffee className="mr-2 h-5 w-5" />
             Staff Login
+          </Button>
+
+          <Button 
+            onClick={goToCashierRegister} 
+            variant="ghost"
+            className="w-full h-14"
+          >
+            <UserPlus className="mr-2 h-5 w-5" />
+            Register as Cashier
           </Button>
         </div>
       </div>
