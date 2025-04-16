@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 
 interface NotificationsTabProps {
@@ -46,7 +44,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
         const reservationData = await getAllReservations();
         setReservations(reservationData);
         
-        // Create unique list of customers from reservations
         const uniqueCustomers = reservationData.reduce<{ id: number; name: string; email: string }[]>((acc, reservation) => {
           if (!acc.some(c => c.id === reservation.userId)) {
             acc.push({
@@ -99,7 +96,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
         description: "Notification sent successfully",
       });
       
-      // Reset form
       setTitle('');
       setMessage('');
       setSelectedUserId('');
