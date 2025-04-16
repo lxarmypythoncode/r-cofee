@@ -13,7 +13,6 @@ import Reservation from "@/pages/Reservation";
 import Contact from "@/pages/Contact";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 
 const queryClient = new QueryClient();
@@ -34,7 +33,6 @@ const App = () => (
                 <Route path="/reservation" element={<Reservation />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -34,6 +34,9 @@ const Navbar = () => {
     navigate('/dashboard');
   };
 
+  // Only show staff login/logout options
+  const showStaffAuth = user?.role === 'admin' || user?.role === 'cashier';
+
   return (
     <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -45,7 +48,7 @@ const Navbar = () => {
         {isMobile ? (
           <>
             <div className="flex items-center gap-3">
-              {user && <NotificationsMenu />}
+              {showStaffAuth && user && <NotificationsMenu />}
               <Button 
                 variant="ghost"
                 size="icon"
@@ -88,41 +91,44 @@ const Navbar = () => {
                     Contact
                   </Link>
                   
-                  {user ? (
+                  {showStaffAuth && (
                     <>
-                      {(user.role === 'admin' || user.role === 'cashier') && (
-                        <Link 
-                          to="/dashboard" 
-                          className="py-2 px-4 text-coffee hover:bg-coffee/5 rounded"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Dashboard
-                        </Link>
+                      {user && (
+                        <>
+                          <Link 
+                            to="/dashboard" 
+                            className="py-2 px-4 text-coffee hover:bg-coffee/5 rounded"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            Dashboard
+                          </Link>
+                          <Button 
+                            variant="ghost" 
+                            className="w-full flex gap-2 items-center justify-center"
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              handleLogoutClick();
+                            }}
+                          >
+                            <LogOut className="h-4 w-4" />
+                            <span>Logout</span>
+                          </Button>
+                        </>
                       )}
-                      <Button 
-                        variant="ghost" 
-                        className="w-full flex gap-2 items-center justify-center"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          handleLogoutClick();
-                        }}
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </Button>
+                      {!user && (
+                        <Button 
+                          variant="ghost" 
+                          className="w-full flex gap-2 items-center justify-center"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            handleLoginClick();
+                          }}
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Staff Login</span>
+                        </Button>
+                      )}
                     </>
-                  ) : (
-                    <Button 
-                      variant="ghost" 
-                      className="w-full flex gap-2 items-center justify-center"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        handleLoginClick();
-                      }}
-                    >
-                      <User className="h-4 w-4" />
-                      <span>Login</span>
-                    </Button>
                   )}
                 </div>
               </div>
@@ -143,34 +149,36 @@ const Navbar = () => {
               Contact
             </Link>
             
-            {user && <NotificationsMenu />}
+            {showStaffAuth && user && <NotificationsMenu />}
             
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
+            {showStaffAuth && (
+              <>
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="gap-2">
+                        <User className="h-4 w-4" />
+                        <span>{user.name}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Staff Account</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleDashboardClick}>
+                        Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogoutClick}>
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={handleLoginClick} className="gap-2">
                     <User className="h-4 w-4" />
-                    <span>{user.name}</span>
+                    <span>Staff Login</span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {(user.role === 'admin' || user.role === 'cashier') && (
-                    <DropdownMenuItem onClick={handleDashboardClick}>
-                      Dashboard
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={handleLogoutClick}>
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={handleLoginClick} className="gap-2">
-                <User className="h-4 w-4" />
-                <span>Login</span>
-              </Button>
+                )}
+              </>
             )}
           </div>
         )}

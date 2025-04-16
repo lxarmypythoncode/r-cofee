@@ -16,9 +16,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect to home
+  // If already logged in, redirect to dashboard
   if (user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/dashboard" />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,19 +38,13 @@ const Login = () => {
     try {
       const user = await authenticateUser(email, password);
       
-      if (user) {
+      if (user && (user.role === 'admin' || user.role === 'cashier')) {
         login(user);
-        
-        // Redirect based on role
-        if (user.role === 'admin' || user.role === 'cashier') {
-          navigate('/dashboard');
-        } else {
-          navigate('/');
-        }
+        navigate('/dashboard');
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid email or password",
+          description: "Invalid credentials or insufficient permissions",
           variant: "destructive",
         });
       }
@@ -76,18 +70,16 @@ const Login = () => {
     setPassword('password');
   };
 
-  const loginAsCustomer = () => {
-    setEmail('customer@example.com');
-    setPassword('password');
-  };
-
   return (
     <div className="container mx-auto max-w-md py-12">
       <div className="rounded-lg border bg-card shadow-sm p-8">
         <div className="flex flex-col items-center mb-6">
           <Coffee className="h-12 w-12 text-coffee mb-2" />
           <h1 className="font-serif text-3xl font-bold text-coffee">R-Coffee</h1>
-          <h2 className="text-xl font-semibold mb-6">Login</h2>
+          <h2 className="text-xl font-semibold mb-2">Staff Login</h2>
+          <p className="text-center text-muted-foreground text-sm mb-4">
+            Access restricted to authorized staff members
+          </p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -99,7 +91,7 @@ const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="staff@rcoffee.com"
                 required
               />
             </div>
@@ -121,21 +113,11 @@ const Login = () => {
           </div>
         </form>
         
-        <div className="mt-6">
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-coffee underline hover:text-coffee-dark">
-              Sign up
-            </Link>
-          </p>
-        </div>
-        
         <div className="mt-6 border-t pt-4">
-          <p className="text-center text-sm text-muted-foreground mb-3">Demo Accounts:</p>
-          <div className="grid grid-cols-3 gap-2">
+          <p className="text-center text-sm text-muted-foreground mb-3">Demo Staff Accounts:</p>
+          <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" size="sm" onClick={loginAsAdmin}>Admin</Button>
             <Button variant="outline" size="sm" onClick={loginAsCashier}>Cashier</Button>
-            <Button variant="outline" size="sm" onClick={loginAsCustomer}>Customer</Button>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (user: User) => void;
   logout: () => void;
   isLoading: boolean;
+  isStaff: (user: User | null) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +27,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (userData: User) => {
+    // Only allow admin and cashier roles to log in
+    if (userData.role !== 'admin' && userData.role !== 'cashier') {
+      toast({
+        title: "Access Denied",
+        description: "Only staff members can log in to the system.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUser(userData);
     setCurrentUser(userData);
     toast({
@@ -43,11 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  // Helper function to check if user is staff (admin or cashier)
+  const isStaff = (user: User | null): boolean => {
+    if (!user) return false;
+    return user.role === 'admin' || user.role === 'cashier';
+  };
+
   const value = {
     user,
     login,
     logout,
     isLoading,
+    isStaff,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
