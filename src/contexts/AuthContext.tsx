@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = (userData: User) => {
     // For staff roles, check authorization
-    if (userData.role === 'admin' || userData.role === 'cashier' || userData.role === 'super_admin') {
+    if (userData.role === 'admin' || userData.role === 'cashier') {
       // If the user is a cashier and their status is pending, deny access
       if (userData.role === 'cashier' && userData.status === 'pending') {
         toast({
@@ -43,7 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
     }
-
+    
+    // Super admin doesn't need the status check as they're always approved
+    
     setUser(userData);
     setCurrentUser(userData);
     toast({

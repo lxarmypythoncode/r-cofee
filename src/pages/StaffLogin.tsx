@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,7 +35,11 @@ const StaffLogin = () => {
     setIsLoading(true);
     
     try {
+      // For debug purposes
+      console.log("Attempting to login with:", email, password);
+      
       const user = await authenticateUser(email, password);
+      console.log("Authentication result:", user);
       
       if (user && (user.role === 'admin' || user.role === 'cashier' || user.role === 'super_admin')) {
         login(user);
@@ -49,6 +52,7 @@ const StaffLogin = () => {
         });
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
         description: "An error occurred during login",
@@ -101,7 +105,7 @@ const StaffLogin = () => {
             </Button>
 
             <p className="text-sm text-center text-muted-foreground mt-2">
-              Note: For super admin login, use email: super_admin@rcoffee.com
+              Super admin login: super_admin@rcoffee.com / password: admin123
             </p>
             
             <div className="flex justify-between mt-4">
