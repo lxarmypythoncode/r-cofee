@@ -88,7 +88,7 @@ const Reservation = () => {
         time: values.time,
         guests: parseInt(values.guests),
         specialRequests: values.specialRequests || '',
-        status: 'pending',
+        // Remove the status property as it's not expected in the type
       });
 
       toast({

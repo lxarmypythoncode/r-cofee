@@ -1,11 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
+import { getUserReservations, Reservation, cancelReservation } from '@/data/reservationData';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserReservations, Reservation } from '@/data/reservationData';
+import { Calendar, Clock, Info, Users, X } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
-import { Calendar, Clock, Users, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from '@/hooks/use-toast';
 
 interface CustomerReservationsTabProps {
   userId: number;
@@ -13,103 +25,152 @@ interface CustomerReservationsTabProps {
 
 const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userId }) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
   useEffect(() => {
     const fetchReservations = async () => {
+      setIsLoading(true);
       try {
         const data = await getUserReservations(userId);
         setReservations(data);
       } catch (error) {
         console.error('Failed to fetch reservations:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load your reservations. Please try again later.",
+          variant: "destructive",
+        });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchReservations();
   }, [userId]);
 
-  const handleNewReservation = () => {
-    navigate('/reservation');
-  };
-
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleCancelReservation = async (reservationId: number) => {
+    try {
+      await cancelReservation(reservationId);
+      
+      setReservations(prevReservations => 
+        prevReservations.map(reservation => 
+          reservation.id === reservationId 
+            ? { ...reservation, status: 'cancelled' } 
+            : reservation
+        )
+      );
+      
+      toast({
+        title: "Reservation Cancelled",
+        description: "Your reservation has been cancelled successfully.",
+      });
+    } catch (error) {
+      console.error('Failed to cancel reservation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel your reservation. Please try again later.",
+        variant: "destructive",
+      });
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center py-8">Loading your reservations...</div>;
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Loading your reservations...</div>;
+  }
+
+  if (reservations.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium">You don't have any reservations yet</h3>
+        <p className="text-muted-foreground mt-2">Book a table to enjoy our delicious offerings</p>
+        <Button className="mt-4" asChild>
+          <a href="/reservation">Make a Reservation</a>
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">My Reservations</h2>
-        <Button onClick={handleNewReservation}>New Reservation</Button>
-      </div>
-
-      {reservations.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-medium mb-2">No Reservations Yet</h3>
-            <p className="text-muted-foreground mb-6 text-center">
-              You haven't made any reservations yet. Book a table to enjoy our coffee and food.
-            </p>
-            <Button onClick={handleNewReservation}>Make Your First Reservation</Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {reservations.map((reservation) => (
-            <Card key={reservation.id} className="overflow-hidden">
-              <div className={`p-2 text-center text-sm font-medium uppercase ${getStatusBadgeClass(reservation.status)}`}>
-                {reservation.status}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold">My Reservations</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {reservations.map((reservation) => (
+          <Card key={reservation.id} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-xl">
+                  {format(parseISO(reservation.date), 'MMMM dd, yyyy')}
+                </CardTitle>
+                <Badge className={`
+                  ${reservation.status === 'confirmed' ? 'bg-green-500' : ''}
+                  ${reservation.status === 'pending' ? 'bg-amber-500' : ''}
+                  ${reservation.status === 'cancelled' ? 'bg-red-500' : ''}
+                `}>
+                  {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                </Badge>
               </div>
-              <CardHeader>
-                <CardTitle>Reservation #{reservation.id}</CardTitle>
-                <CardDescription>
-                  {format(parseISO(reservation.date), 'EEEE, MMMM d, yyyy')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{reservation.time}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{reservation.guests} {reservation.guests === 1 ? 'Guest' : 'Guests'}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>Table {reservation.tableNumber || 'To be assigned'}</span>
-                  </div>
-                  {reservation.specialRequests && (
-                    <div className="mt-4 pt-4 border-t">
-                      <h4 className="text-sm font-medium mb-1">Special Requests:</h4>
-                      <p className="text-sm text-muted-foreground">{reservation.specialRequests}</p>
-                    </div>
-                  )}
+            </CardHeader>
+            <CardContent className="pb-2">
+              <div className="space-y-2">
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span>{reservation.time}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                <div className="flex items-center text-muted-foreground">
+                  <Users className="h-4 w-4 mr-2" />
+                  <span>{reservation.guests} {reservation.guests === 1 ? 'guest' : 'guests'}</span>
+                </div>
+                
+                {/* Remove tableNumber reference as it doesn't exist in the Reservation type */}
+                
+                {reservation.specialRequests && (
+                  <div className="flex items-start text-muted-foreground mt-2">
+                    <Info className="h-4 w-4 mr-2 mt-1" />
+                    <span className="text-sm">{reservation.specialRequests}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter>
+              {(reservation.status === 'pending' || reservation.status === 'confirmed') && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" className="w-full">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel Reservation
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel Reservation</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to cancel your reservation for {format(parseISO(reservation.date), 'MMMM dd, yyyy')} at {reservation.time}? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Reservation</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => handleCancelReservation(reservation.id)}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        Yes, Cancel
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              
+              {reservation.status === 'cancelled' && (
+                <div className="w-full text-center text-muted-foreground text-sm">
+                  This reservation has been cancelled
+                </div>
+              )}
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

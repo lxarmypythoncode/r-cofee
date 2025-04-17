@@ -1,4 +1,3 @@
-
 // User authentication and roles management
 
 export interface User {
@@ -67,6 +66,22 @@ let users = getInitialUsers();
 const saveUsers = () => {
   const usersToSave = users.map(({ password, ...user }) => user); // Remove passwords before saving
   localStorage.setItem('rcoffee_users', JSON.stringify(usersToSave));
+};
+
+// Verify user credentials
+export const verifyUser = (email: string, password: string): Promise<User | null> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const user = users.find((u) => u.email === email && u.password === password);
+      if (user) {
+        // Return a copy without the password
+        const { password, ...userWithoutPassword } = user;
+        resolve(userWithoutPassword);
+      } else {
+        resolve(null);
+      }
+    }, 500);
+  });
 };
 
 // Authentication functions
