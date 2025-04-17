@@ -1,60 +1,65 @@
 
-import React, { useState } from 'react';
-import { Navigate, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { authenticateUser } from '@/data/userData';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Coffee } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { verifyUser } from '@/data/userData';
+import { toast } from '@/hooks/use-toast';
+
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+});
 
 const CustomerLogin = () => {
-  const { user, login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect to reservation page
-  if (user) {
-    return <Navigate to="/reservation" />;
-  }
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
-      return;
+  useEffect(() => {
+    // If user is already logged in, redirect to customer dashboard
+    if (user) {
+      navigate('/customer-dashboard');
     }
-    
+  }, [user, navigate]);
+
+  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     
     try {
-      const authenticatedUser = await authenticateUser(email, password);
-      if (authenticatedUser) {
-        login(authenticatedUser);
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${authenticatedUser.name}!`,
-        });
-        navigate('/reservation');
+      const user = await verifyUser(values.email, values.password);
+      
+      if (user && user.role === 'customer') {
+        login(user);
+        navigate('/customer-dashboard');
       } else {
         toast({
-          title: "Error",
-          description: "Invalid email or password",
+          title: "Login Failed",
+          description: "Invalid email or password, or this account is not a customer account.",
           variant: "destructive",
         });
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: "Error",
-        description: "An error occurred during login",
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -64,53 +69,63 @@ const CustomerLogin = () => {
 
   return (
     <div className="container mx-auto max-w-md py-12">
-      <div className="rounded-lg border bg-card shadow-sm p-8">
-        <div className="flex flex-col items-center mb-6">
+      <Card>
+        <CardHeader className="space-y-1 flex flex-col items-center">
           <Coffee className="h-12 w-12 text-coffee mb-2" />
-          <h1 className="font-serif text-3xl font-bold text-coffee">R-Coffee</h1>
-          <h2 className="text-xl font-semibold mb-6">Customer Login</h2>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
+          <CardTitle className="text-2xl text-center">Customer Login</CardTitle>
+          <CardDescription className="text-center">
+            Enter your email and password to access your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="you@example.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="••••••••" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Logging in..." : "Login"}
-            </Button>
-          </div>
-        </form>
-        
-        <div className="mt-6">
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-coffee underline hover:text-coffee-dark">
-              Register
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-center text-muted-foreground">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-coffee hover:underline">
+              Register now
             </Link>
-          </p>
-        </div>
-      </div>
+          </div>
+          <div className="text-sm text-center text-muted-foreground">
+            <Link to="/login" className="text-coffee hover:underline">
+              Back to main login page
+            </Link>
+          </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

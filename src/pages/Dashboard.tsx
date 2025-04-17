@@ -8,7 +8,8 @@ import ReservationsTab from '@/components/dashboard/ReservationsTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import SettingsTab from '@/components/dashboard/SettingsTab';
 import SuperAdminTab from '@/components/dashboard/SuperAdminTab';
-import { Clock, Bell, Settings, ShieldCheck, LogOut } from 'lucide-react';
+import OrdersTab from '@/components/dashboard/OrdersTab';
+import { Clock, Bell, Settings, ShieldCheck, LogOut, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
@@ -62,6 +63,10 @@ const Dashboard = () => {
                 <Clock className="h-4 w-4" />
                 <span>Reservations</span>
               </TabsTrigger>
+              <TabsTrigger value="orders" className="flex gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                <span>Orders</span>
+              </TabsTrigger>
               <TabsTrigger value="notifications" className="flex gap-2">
                 <Bell className="h-4 w-4" />
                 <span>Notifications</span>
@@ -82,6 +87,10 @@ const Dashboard = () => {
             
             <TabsContent value="reservations">
               <ReservationsTab userRole={user?.role} />
+            </TabsContent>
+            
+            <TabsContent value="orders">
+              <OrdersTab userRole={user?.role} />
             </TabsContent>
             
             <TabsContent value="notifications">

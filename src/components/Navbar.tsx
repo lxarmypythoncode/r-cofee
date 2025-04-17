@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Coffee, Menu, X, User, LogOut } from 'lucide-react';
+import { Coffee, Menu, X, User, LogOut, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +31,11 @@ const Navbar = () => {
   };
   
   const handleDashboardClick = () => {
-    navigate('/dashboard');
+    if (isStaff(user)) {
+      navigate('/dashboard');
+    } else if (isCustomer(user)) {
+      navigate('/customer-dashboard');
+    }
   };
   
   const handleReservationClick = () => {
@@ -49,7 +53,21 @@ const Navbar = () => {
         {isMobile ? (
           <>
             <div className="flex items-center gap-3">
-              {isStaff(user) && user && <NotificationsMenu />}
+              {user && (
+                <>
+                  {isStaff(user) && <NotificationsMenu />}
+                  {isCustomer(user) && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handleDashboardClick} 
+                      className="relative"
+                    >
+                      <ShoppingBag className="h-5 w-5" />
+                    </Button>
+                  )}
+                </>
+              )}
               <Button 
                 variant="ghost"
                 size="icon"
@@ -103,6 +121,15 @@ const Navbar = () => {
                           Dashboard
                         </Link>
                       )}
+                      {isCustomer(user) && (
+                        <Link 
+                          to="/customer-dashboard" 
+                          className="py-2 px-4 text-coffee hover:bg-coffee/5 rounded"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          My Dashboard
+                        </Link>
+                      )}
                       <Button 
                         variant="ghost" 
                         className="w-full flex gap-2 items-center justify-center"
@@ -147,7 +174,11 @@ const Navbar = () => {
               Contact
             </Link>
             
-            {isStaff(user) && user && <NotificationsMenu />}
+            {user && (
+              <>
+                {isStaff(user) && <NotificationsMenu />}
+              </>
+            )}
             
             {user ? (
               <DropdownMenu>
@@ -158,13 +189,11 @@ const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{user.role === 'customer' ? 'Customer' : 'Staff Account'}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{isCustomer(user) ? 'Customer' : 'Staff Account'}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {isStaff(user) && (
-                    <DropdownMenuItem onClick={handleDashboardClick}>
-                      Dashboard
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem onClick={handleDashboardClick}>
+                    {isCustomer(user) ? 'My Dashboard' : 'Staff Dashboard'}
+                  </DropdownMenuItem>
                   {isCustomer(user) && (
                     <DropdownMenuItem onClick={handleReservationClick}>
                       Make Reservation

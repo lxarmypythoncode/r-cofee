@@ -1,395 +1,318 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { getTimeSlots, getMaxGuestCapacity, getAvailableTables, createReservation, Table } from '@/data/reservationData';
+import { format } from 'date-fns';
+import { CalendarIcon, Users } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { createReservation } from '@/data/reservationData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+
+const timeSlots = [
+  '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', 
+  '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
+  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM',
+  '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM',
+  '8:00 PM', '8:30 PM', '9:00 PM'
+];
+
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  email: z.string().email({ message: 'Please enter a valid email address.' }),
+  phone: z.string().min(10, { message: 'Please enter a valid phone number.' }),
+  date: z.date({ required_error: 'Please select a date.' }),
+  time: z.string({ required_error: 'Please select a time.' }),
+  guests: z.string().min(1, { message: 'Please select the number of guests.' }),
+  specialRequests: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const Reservation = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState<string>('');
-  const [guests, setGuests] = useState<number>(2);
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [specialRequests, setSpecialRequests] = useState<string>('');
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [maxGuests, setMaxGuests] = useState<number>(6);
-  const [availableTables, setAvailableTables] = useState<Table[]>([]);
-  const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [step, setStep] = useState<number>(1);
+  const { user, isCustomer } = useAuth();
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!user) {
-    return <Navigate to="/customer-login" />;
-  }
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: user ? user.name : '',
+      email: user ? user.email : '',
+      phone: '',
+      guests: '2',
+      specialRequests: '',
+    },
+  });
 
   useEffect(() => {
+    // If user is logged in, pre-fill the form
     if (user) {
-      setName(user.name || '');
-      setEmail(user.email || '');
+      form.setValue('name', user.name);
+      form.setValue('email', user.email);
     }
-    
-    const fetchTimeSlots = () => {
-      const slots = getTimeSlots();
-      setTimeSlots(slots);
-    };
+  }, [user, form]);
 
-    const fetchMaxGuests = () => {
-      const max = getMaxGuestCapacity();
-      setMaxGuests(max);
-    };
-
-    fetchTimeSlots();
-    fetchMaxGuests();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchAvailableTables = async () => {
-      if (date && time && guests) {
-        const formattedDate = format(date, 'yyyy-MM-dd');
-        try {
-          const tables = await getAvailableTables(formattedDate, time, guests);
-          setAvailableTables(tables);
-          if (tables.length > 0) {
-            setSelectedTable(tables[0].id);
-          } else {
-            setSelectedTable(null);
-          }
-        } catch (error) {
-          console.error('Error fetching available tables:', error);
-        }
-      }
-    };
-
-    if (date && time && guests) {
-      fetchAvailableTables();
-    } else {
-      setAvailableTables([]);
-      setSelectedTable(null);
+  const onSubmit = async (values: FormValues) => {
+    // If not logged in, redirect to login
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login or register to make a reservation",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
     }
-  }, [date, time, guests]);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setDate(date);
-    if (step === 1 && date) {
-      setStep(2);
-    }
-  };
-
-  const handleTimeSelect = (selectedTime: string) => {
-    setTime(selectedTime);
-    if (step === 2) {
-      setStep(3);
-    }
-  };
-
-  const handleGuestsChange = (value: string) => {
-    setGuests(Number(value));
-  };
-
-  const handleTableSelect = (tableId: string) => {
-    setSelectedTable(Number(tableId));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!date || !time || !selectedTable) return;
-
-    setIsLoading(true);
-    const formattedDate = format(date, 'yyyy-MM-dd');
+    setIsSubmitting(true);
 
     try {
       await createReservation({
         userId: user.id,
-        name,
-        email,
-        phone,
-        date: formattedDate,
-        time,
-        guests,
-        tableId: selectedTable,
-        specialRequests,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        date: values.date.toISOString(),
+        time: values.time,
+        guests: parseInt(values.guests),
+        specialRequests: values.specialRequests || '',
+        status: 'pending',
       });
 
       toast({
-        title: "Reservation Created",
-        description: `Your reservation for ${guests} on ${format(date, 'MMMM d, yyyy')} at ${time} has been created. You will receive a confirmation soon.`,
+        title: "Reservation Submitted",
+        description: "Your table reservation has been received. We'll confirm it shortly.",
       });
 
-      setDate(undefined);
-      setTime('');
-      setGuests(2);
-      setSpecialRequests('');
-      setSelectedTable(null);
-      setStep(1);
+      // Clear the form
+      form.reset({
+        name: user.name,
+        email: user.email,
+        phone: '',
+        guests: '2',
+        specialRequests: '',
+      });
 
-      navigate('/');
+      // If customer, redirect to their dashboard
+      if (isCustomer(user)) {
+        navigate('/customer-dashboard');
+      }
     } catch (error) {
+      console.error('Reservation error:', error);
       toast({
-        title: "Error",
-        description: "There was a problem creating your reservation. Please try again.",
+        title: "Submission Failed",
+        description: "An error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const handleBackToLogin = () => {
-    navigate('/login');
   };
 
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center mb-4">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="mr-4"
-            onClick={handleBackToLogin}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-3xl font-serif font-bold text-coffee">Reserve a Table</h1>
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-serif font-bold text-coffee mb-2">Reserve a Table</h1>
+          <p className="text-muted-foreground">
+            Book your table at R-Coffee and enjoy our delicious menu items
+          </p>
         </div>
-        <p className="text-muted-foreground mb-8">Book your visit to R-Coffee and enjoy premium coffee and cuisine.</p>
 
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="p-6">
-            <div className="flex mb-6">
-              <div className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-coffee text-white' : 'bg-gray-200'}`}>1</div>
-                <div className="ml-2 font-medium">Date</div>
-              </div>
-              <div className="w-12 h-0.5 mx-2 self-center bg-gray-200"></div>
-              <div className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-coffee text-white' : 'bg-gray-200'}`}>2</div>
-                <div className="ml-2 font-medium">Time</div>
-              </div>
-              <div className="w-12 h-0.5 mx-2 self-center bg-gray-200"></div>
-              <div className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-coffee text-white' : 'bg-gray-200'}`}>3</div>
-                <div className="ml-2 font-medium">Details</div>
-              </div>
-            </div>
-
-            {step === 1 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Select a Date</h2>
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date() || date > new Date(new Date().setMonth(new Date().getMonth() + 3))}
-                    className="rounded-md border"
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Select a Time</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {timeSlots.map((slot) => (
-                    <Button
-                      key={slot}
-                      variant={time === slot ? "default" : "outline"}
-                      onClick={() => handleTimeSelect(slot)}
-                      className={time === slot ? "bg-coffee hover:bg-coffee-dark" : ""}
-                    >
-                      {slot}
-                    </Button>
-                  ))}
-                </div>
-                <div className="mt-4 flex justify-between">
-                  <Button
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                  >
-                    Back
+        {!user && (
+          <Card className="mb-8">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="mb-4">
+                  Please login or register to make a reservation. This helps us manage your booking and provide you with better service.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button asChild variant="default">
+                    <Link to="/customer-login">Login</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/register">Register</Link>
                   </Button>
                 </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        )}
 
-            {step === 3 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Reservation Details</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="date">Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !date && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={handleDateSelect}
-                            initialFocus
-                            disabled={(date) => date < new Date() || date > new Date(new Date().setMonth(new Date().getMonth() + 3))}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="time">Time</Label>
-                      <Select value={time} onValueChange={handleTimeSelect}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeSlots.map((slot) => (
-                            <SelectItem key={slot} value={slot}>
-                              {slot}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="guests">Number of Guests</Label>
-                      <Select value={guests.toString()} onValueChange={handleGuestsChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select guests" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: maxGuests }, (_, i) => i + 1).map((num) => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num} {num === 1 ? 'Guest' : 'Guests'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="table">Table</Label>
-                      <Select 
-                        value={selectedTable ? selectedTable.toString() : ''} 
-                        onValueChange={handleTableSelect}
-                        disabled={availableTables.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={availableTables.length > 0 ? "Select table" : "No tables available"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableTables.map((table) => (
-                            <SelectItem key={table.id} value={table.id.toString()}>
-                              {table.name} (Seats {table.capacity})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your full name"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="your@email.com"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Your phone number"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="specialRequests">Special Requests (Optional)</Label>
-                    <Textarea
-                      id="specialRequests"
-                      value={specialRequests}
-                      onChange={(e) => setSpecialRequests(e.target.value)}
-                      placeholder="Any dietary requirements or special requests?"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="pt-4 flex justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setStep(2)}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isLoading || !selectedTable}
-                      className="bg-coffee hover:bg-coffee-dark"
-                    >
-                      {isLoading ? "Processing..." : "Complete Reservation"}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Reservation Details</CardTitle>
+            <CardDescription>
+              Fill out the form below to reserve your table. We'll send you a confirmation email.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your name" {...field} disabled={!!user} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="your@email.com" {...field} disabled={!!user} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="guests"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Guests</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select number of guests" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                              <SelectItem key={num} value={num.toString()}>
+                                {num} {num === 1 ? 'Guest' : 'Guests'}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Time</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select time" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {timeSlots.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="specialRequests"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Special Requests</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Any special requests or dietary requirements?"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Reserve Table"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
