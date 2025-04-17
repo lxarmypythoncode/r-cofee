@@ -1,3 +1,4 @@
+
 // User authentication and roles management
 
 export interface User {
@@ -149,9 +150,10 @@ export const registerUser = (email: string, name: string, password: string, role
         email,
         name,
         role,
-        password,
+        // Set status to pending for cashiers, undefined for customers
         status: role === 'cashier' ? 'pending' : undefined,
         createdAt: new Date().toISOString(),
+        password,
       };
       
       users.push(newUser);

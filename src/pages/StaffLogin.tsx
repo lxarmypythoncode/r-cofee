@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { authenticateUser, resetAllUserData } from '@/data/userData';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Coffee, Key, ArrowLeft, RefreshCcw } from 'lucide-react';
+import { Coffee, Key, ArrowLeft, RefreshCcw, ShieldCheck } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const StaffLogin = () => {
@@ -17,6 +17,7 @@ const StaffLogin = () => {
   const [password, setPassword] = useState('admin123'); // Pre-filled for testing
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isPendingCashier, setIsPendingCashier] = useState(false);
 
   // If already logged in, redirect to dashboard
   if (user) {
@@ -30,11 +31,13 @@ const StaffLogin = () => {
       description: "All user data has been reset to defaults.",
     });
     setLoginError(null);
+    setIsPendingCashier(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
+    setIsPendingCashier(false);
     
     if (!email || !password) {
       toast({
@@ -54,9 +57,25 @@ const StaffLogin = () => {
       const user = await authenticateUser(email, password);
       console.log("Authentication result:", user);
       
-      if (user && (user.role === 'admin' || user.role === 'cashier' || user.role === 'super_admin')) {
-        login(user);
-        navigate('/dashboard');
+      if (user) {
+        // Check if the user is a cashier with pending status
+        if (user.role === 'cashier' && user.status === 'pending') {
+          setIsPendingCashier(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (user.role === 'admin' || user.role === 'cashier' || user.role === 'super_admin') {
+          login(user);
+          navigate('/dashboard');
+        } else {
+          setLoginError("Invalid credentials or insufficient permissions");
+          toast({
+            title: "Login Failed",
+            description: "Invalid credentials or insufficient permissions",
+            variant: "destructive",
+          });
+        }
       } else {
         setLoginError("Invalid credentials or insufficient permissions");
         toast({
@@ -77,6 +96,33 @@ const StaffLogin = () => {
       setIsLoading(false);
     }
   };
+
+  if (isPendingCashier) {
+    return (
+      <div className="container mx-auto max-w-md py-12">
+        <div className="rounded-lg border bg-card shadow-sm p-8">
+          <div className="flex flex-col items-center mb-6">
+            <ShieldCheck className="h-12 w-12 text-orange-500 mb-2" />
+            <h1 className="font-serif text-3xl font-bold text-coffee">R-Coffee</h1>
+            <h2 className="text-xl font-semibold mb-2">Account Pending Approval</h2>
+          </div>
+          
+          <Alert className="mb-6">
+            <AlertDescription>
+              Your cashier account has been registered but is still pending approval from a super admin.
+              You will be able to log in once your account is approved.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex justify-center">
+            <Button onClick={() => setIsPendingCashier(false)} className="w-full">
+              Return to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-md py-12">

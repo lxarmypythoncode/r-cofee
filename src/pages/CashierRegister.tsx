@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Coffee, ArrowLeft } from 'lucide-react';
+import { Coffee, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CashierRegister = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const CashierRegister = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +47,9 @@ const CashierRegister = () => {
       
       toast({
         title: "Registration Pending",
-        description: "Your cashier account has been registered and is pending approval by a super admin.",
+        description: "Your account has been registered and is awaiting super admin approval.",
       });
-      navigate('/staff-login');
+      setIsRegistered(true);
     } catch (error) {
       toast({
         title: "Error",
@@ -59,6 +61,33 @@ const CashierRegister = () => {
     }
   };
 
+  if (isRegistered) {
+    return (
+      <div className="container mx-auto max-w-md py-12">
+        <div className="rounded-lg border bg-card shadow-sm p-8">
+          <div className="flex flex-col items-center mb-6">
+            <ShieldCheck className="h-12 w-12 text-coffee mb-2" />
+            <h1 className="font-serif text-3xl font-bold text-coffee">R-Coffee</h1>
+            <h2 className="text-xl font-semibold mb-2">Registration Submitted</h2>
+          </div>
+          
+          <Alert className="mb-6">
+            <AlertDescription>
+              Your cashier account has been registered successfully and is now pending approval from a super admin. 
+              You will not be able to log in until your account is approved.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex justify-center">
+            <Button onClick={() => navigate('/staff-login')} className="w-full">
+              Return to Staff Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-md py-12">
       <div className="rounded-lg border bg-card shadow-sm p-8">
@@ -67,9 +96,15 @@ const CashierRegister = () => {
           <h1 className="font-serif text-3xl font-bold text-coffee">R-Coffee</h1>
           <h2 className="text-xl font-semibold mb-2">Cashier Registration</h2>
           <p className="text-center text-muted-foreground text-sm mb-4">
-            Register as a cashier. Your account will need approval from a super admin.
+            Register as a cashier. Your account will require super admin approval before you can log in.
           </p>
         </div>
+
+        <Alert className="mb-4">
+          <AlertDescription>
+            After registration, a super admin must approve your account before you can log in.
+          </AlertDescription>
+        </Alert>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4">

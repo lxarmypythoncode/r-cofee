@@ -31,20 +31,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (userData: User) => {
-    // For staff roles, check authorization
-    if (userData.role === 'admin' || userData.role === 'cashier') {
-      // If the user is a cashier and their status is pending, deny access
-      if (userData.role === 'cashier' && userData.status === 'pending') {
-        toast({
-          title: "Account Pending",
-          description: "Your account requires approval from a super admin.",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Check if the user is a cashier with pending status
+    if (userData.role === 'cashier' && userData.status === 'pending') {
+      console.log("Rejecting login for pending cashier:", userData);
+      toast({
+        title: "Account Pending",
+        description: "Your account requires approval from a super admin.",
+        variant: "destructive",
+      });
+      return;
     }
     
-    // Super admin doesn't need the status check as they're always approved
+    // Log successful login
+    console.log("Login successful for:", userData);
     
     setUser(userData);
     setCurrentUser(userData);
