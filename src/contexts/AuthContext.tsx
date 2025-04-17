@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, getCurrentUser, setCurrentUser } from '@/data/userData';
+import { User, getCurrentUser, setCurrentUser, getAllUsers } from '@/data/userData';
 import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -13,13 +13,23 @@ interface AuthContextType {
   isAdmin: (user: User | null) => boolean;
   isCashier: (user: User | null) => boolean;
   isCustomer: (user: User | null) => boolean;
+  allUsers: User[];
+  getAllUserData: () => Promise<User[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Get all users
+  const getAllUserData = async () => {
+    const users = await getAllUsers();
+    setAllUsers(users);
+    return users;
+  };
 
   useEffect(() => {
     // Check for user in localStorage on app load
@@ -27,6 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUser) {
       setUser(storedUser);
     }
+    
+    // Load all users data
+    getAllUserData();
+    
     setIsLoading(false);
   }, []);
 
@@ -51,6 +65,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title: "Logged in successfully",
       description: `Welcome back, ${userData.name}!`,
     });
+    
+    // Refresh the list of all users
+    getAllUserData();
   };
 
   const logout = () => {
@@ -102,6 +119,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAdmin,
     isCashier,
     isCustomer,
+    allUsers,
+    getAllUserData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

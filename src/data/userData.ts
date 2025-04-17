@@ -129,6 +129,19 @@ export const setCurrentUser = (user: User | null): void => {
   }
 };
 
+// Get all users from the system (without passwords)
+export const getAllUsers = (): Promise<User[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      resolve(usersWithoutPasswords);
+    }, 500);
+  });
+};
+
 // Reset all user data to defaults (for debugging)
 export const resetAllUserData = (): void => {
   localStorage.removeItem('currentUser');
