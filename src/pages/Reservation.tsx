@@ -15,7 +15,7 @@ import { CalendarIcon, Users } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { createReservation } from '@/data/reservationData';
+import { createReservation, getAvailableTables } from '@/data/reservationData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -44,6 +44,7 @@ const Reservation = () => {
   const { user, isCustomer } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableTableId, setAvailableTableId] = useState<number | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -79,16 +80,33 @@ const Reservation = () => {
     setIsSubmitting(true);
 
     try {
+      // Find an available table for the reservation
+      const selectedDate = format(values.date, 'yyyy-MM-dd');
+      const availableTables = await getAvailableTables(selectedDate, values.time, parseInt(values.guests));
+      
+      if (availableTables.length === 0) {
+        toast({
+          title: "No Tables Available",
+          description: "Sorry, there are no tables available for the selected time and party size.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Select the first available table
+      const tableId = availableTables[0].id;
+      
       await createReservation({
         userId: user.id,
         name: values.name,
         email: values.email,
         phone: values.phone,
-        date: values.date.toISOString(),
+        date: selectedDate,
         time: values.time,
         guests: parseInt(values.guests),
         specialRequests: values.specialRequests || '',
-        // Remove the status property as it's not expected in the type
+        tableId: tableId // Add the tableId property
       });
 
       toast({

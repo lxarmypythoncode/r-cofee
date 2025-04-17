@@ -1,4 +1,3 @@
-
 // Reservation data types and service to simulate database
 
 export interface Table {
@@ -153,6 +152,26 @@ export const updateReservationStatus = (id: number, status: Reservation['status'
       reservations[index] = {
         ...reservations[index],
         status
+      };
+      
+      resolve(reservations[index]);
+    }, 300);
+  });
+};
+
+// Cancel a reservation
+export const cancelReservation = (id: number): Promise<Reservation> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const index = reservations.findIndex(r => r.id === id);
+      if (index === -1) {
+        reject(new Error('Reservation not found'));
+        return;
+      }
+      
+      reservations[index] = {
+        ...reservations[index],
+        status: 'cancelled'
       };
       
       resolve(reservations[index]);
