@@ -62,10 +62,19 @@ const getInitialUsers = (): User[] => {
 // Get users from localStorage or initialize with defaults
 let users = getInitialUsers();
 
+// Save current users to localStorage
+const resetUsers = () => {
+  // For debugging purposes - let's reset the users to default
+  localStorage.removeItem('rcoffee_users');
+  users = getInitialUsers();
+  console.log("Users reset to defaults:", users);
+};
+
 // Function to save users to localStorage
 const saveUsers = () => {
-  const usersToSave = users.map(({ password, ...user }) => user); // Remove passwords before saving
-  localStorage.setItem('rcoffee_users', JSON.stringify(usersToSave));
+  // For debugging, let's log the users before saving
+  console.log("Saving users:", users);
+  localStorage.setItem('rcoffee_users', JSON.stringify(users));
 };
 
 // Verify user credentials
@@ -88,12 +97,16 @@ export const verifyUser = (email: string, password: string): Promise<User | null
 export const authenticateUser = (email: string, password: string): Promise<User | null> => {
   return new Promise((resolve) => {
     setTimeout(() => {
+      console.log("Available users:", users);
       const user = users.find((u) => u.email === email && u.password === password);
+      
       if (user) {
+        console.log("User found:", user);
         // Return a copy without the password
         const { password, ...userWithoutPassword } = user;
         resolve(userWithoutPassword);
       } else {
+        console.log("No user found with email:", email);
         resolve(null);
       }
     }, 500);
@@ -113,6 +126,12 @@ export const setCurrentUser = (user: User | null): void => {
   } else {
     localStorage.removeItem('currentUser');
   }
+};
+
+// Reset all user data to defaults (for debugging)
+export const resetAllUserData = (): void => {
+  localStorage.removeItem('currentUser');
+  resetUsers();
 };
 
 // Register a new user

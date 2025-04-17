@@ -1,27 +1,40 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { authenticateUser } from '@/data/userData';
+import { authenticateUser, resetAllUserData } from '@/data/userData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Coffee, Key, ArrowLeft } from 'lucide-react';
+import { Coffee, Key, ArrowLeft, RefreshCcw } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const StaffLogin = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('super_admin@rcoffee.com'); // Pre-filled for testing
+  const [password, setPassword] = useState('admin123'); // Pre-filled for testing
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // If already logged in, redirect to dashboard
   if (user) {
     return <Navigate to="/dashboard" />;
   }
 
+  const resetData = () => {
+    resetAllUserData();
+    toast({
+      title: "Data Reset",
+      description: "All user data has been reset to defaults.",
+    });
+    setLoginError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError(null);
     
     if (!email || !password) {
       toast({
@@ -45,6 +58,7 @@ const StaffLogin = () => {
         login(user);
         navigate('/dashboard');
       } else {
+        setLoginError("Invalid credentials or insufficient permissions");
         toast({
           title: "Login Failed",
           description: "Invalid credentials or insufficient permissions",
@@ -53,6 +67,7 @@ const StaffLogin = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
+      setLoginError("An error occurred during login");
       toast({
         title: "Error",
         description: "An error occurred during login",
@@ -74,6 +89,12 @@ const StaffLogin = () => {
             Access restricted to authorized staff members
           </p>
         </div>
+
+        {loginError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4">
@@ -114,9 +135,21 @@ const StaffLogin = () => {
                 <span>Back</span>
               </Button>
               
-              <Link to="/cashier-register" className="text-sm text-coffee hover:underline">
-                Register as cashier
-              </Link>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={resetData} 
+                  className="flex items-center gap-1 text-muted-foreground"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  <span>Reset Data</span>
+                </Button>
+                
+                <Link to="/cashier-register" className="text-sm text-coffee hover:underline flex items-center">
+                  Register as cashier
+                </Link>
+              </div>
             </div>
           </div>
         </form>
