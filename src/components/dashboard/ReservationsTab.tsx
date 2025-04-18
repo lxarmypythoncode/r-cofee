@@ -4,7 +4,6 @@ import {
   Table, 
   TableHeader, 
   TableBody,
-
   TableHead, 
   TableRow, 
   TableCell 
@@ -14,12 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { 
   getAllReservations, 
   updateReservationStatus, 
-  Reservation 
+  Reservation,
+  updatePaymentStatus
 } from '@/data/reservationData';
 import { createNotification } from '@/data/notificationsData';
 import { toast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
-import { Check, Clock, X, Send } from 'lucide-react';
+import { Check, Clock, X, Send, DollarSign, CreditCard } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReservationsTabProps {
   userRole: string;
@@ -28,6 +29,7 @@ interface ReservationsTabProps {
 const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isSuperAdmin } = useAuth();
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -100,6 +102,40 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
     }
   };
 
+  const handlePaymentStatusChange = async (id: number, paymentStatus: Reservation['paymentStatus']) => {
+    try {
+      const updatedReservation = await updatePaymentStatus(id, paymentStatus);
+      
+      // Update the reservations list
+      setReservations(prevReservations => 
+        prevReservations.map(res => res.id === id ? updatedReservation : res)
+      );
+      
+      // Create notification for the user
+      let title = 'Payment Update';
+      let message = `Your payment for reservation on ${format(parseISO(updatedReservation.date), 'MMM dd')} at ${updatedReservation.time} has been marked as ${paymentStatus}.`;
+      
+      await createNotification({
+        userId: updatedReservation.userId,
+        title,
+        message,
+        type: 'payment',
+        status: 'unread'
+      });
+      
+      toast({
+        title: "Success",
+        description: `Payment status updated to ${paymentStatus}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update payment status",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Send a notification to a customer
   const sendCustomNotification = async (userId: number, reservationDetails: string) => {
     try {
@@ -143,9 +179,40 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
     }
   };
 
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Payment Pending</Badge>;
+      case 'paid':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Paid</Badge>;
+      case 'refunded':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Refunded</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  // Calculate total revenue from confirmed and paid reservations
+  const totalRevenue = reservations
+    .filter(r => r.status !== 'cancelled' && r.paymentStatus === 'paid')
+    .reduce((sum, reservation) => sum + reservation.paymentAmount, 0);
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Reservations</h2>
+      
+      {isSuperAdmin(userRole) && (
+        <div className="mb-6 p-4 bg-white rounded-lg border shadow-sm">
+          <h3 className="text-lg font-medium mb-2 flex items-center">
+            <DollarSign className="mr-2 h-5 w-5 text-green-600" />
+            Revenue Report
+          </h3>
+          <p className="text-3xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Total from {reservations.filter(r => r.status !== 'cancelled' && r.paymentStatus === 'paid').length} paid reservations
+          </p>
+        </div>
+      )}
       
       <div className="rounded-md border">
         <Table>
@@ -155,7 +222,9 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
               <TableHead>Date</TableHead>
               <TableHead>Time</TableHead>
               <TableHead>Guests</TableHead>
+              <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Payment</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -173,7 +242,9 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
                 </TableCell>
                 <TableCell>{reservation.time}</TableCell>
                 <TableCell>{reservation.guests}</TableCell>
+                <TableCell>${reservation.paymentAmount.toFixed(2)}</TableCell>
                 <TableCell>{getStatusBadge(reservation.status)}</TableCell>
+                <TableCell>{getPaymentStatusBadge(reservation.paymentStatus)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {reservation.status === 'pending' && (
@@ -212,6 +283,18 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
                       </Button>
                     )}
                     
+                    {reservation.paymentStatus === 'pending' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 gap-1 text-green-600 border-green-200 hover:bg-green-50"
+                        onClick={() => handlePaymentStatusChange(reservation.id, 'paid')}
+                      >
+                        <DollarSign className="h-3.5 w-3.5" />
+                        <span>Mark Paid</span>
+                      </Button>
+                    )}
+                    
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -231,7 +314,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
             
             {reservations.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                   No reservations found.
                 </TableCell>
               </TableRow>

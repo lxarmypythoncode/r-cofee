@@ -19,6 +19,8 @@ export interface Reservation {
   tableId: number;
   specialRequests?: string;
   status: 'pending' | 'confirmed' | 'finished' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'refunded';
+  paymentAmount: number;
   createdAt: string;
 }
 
@@ -70,6 +72,8 @@ let reservations: Reservation[] = [
     guests: 2,
     tableId: 1,
     status: 'confirmed',
+    paymentStatus: 'paid',
+    paymentAmount: 50,
     createdAt: "2025-04-10T12:00:00.000Z"
   },
   {
@@ -83,6 +87,8 @@ let reservations: Reservation[] = [
     guests: 4,
     tableId: 16,
     status: 'pending',
+    paymentStatus: 'pending',
+    paymentAmount: 80,
     createdAt: "2025-04-11T10:30:00.000Z"
   }
 ];
@@ -103,13 +109,18 @@ export const getAvailableTables = (date: string, time: string, guests: number): 
 };
 
 // Create a new reservation
-export const createReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'status'>): Promise<Reservation> => {
+export const createReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'status' | 'paymentStatus' | 'paymentAmount'>): Promise<Reservation> => {
   return new Promise((resolve) => {
     setTimeout(() => {
+      // Calculate payment amount based on guests ($20 per guest)
+      const paymentAmount = reservationData.guests * 20;
+      
       const newReservation: Reservation = {
         ...reservationData,
         id: reservations.length + 1,
         status: 'pending',
+        paymentStatus: 'pending',
+        paymentAmount,
         createdAt: new Date().toISOString()
       };
       
@@ -155,6 +166,35 @@ export const updateReservationStatus = (id: number, status: Reservation['status'
       };
       
       resolve(reservations[index]);
+    }, 300);
+  });
+};
+
+// Update payment status
+export const updatePaymentStatus = (id: number, paymentStatus: Reservation['paymentStatus']): Promise<Reservation> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const index = reservations.findIndex(r => r.id === id);
+      if (index === -1) {
+        reject(new Error('Reservation not found'));
+        return;
+      }
+      
+      reservations[index] = {
+        ...reservations[index],
+        paymentStatus
+      };
+      
+      resolve(reservations[index]);
+    }, 300);
+  });
+};
+
+// Get payment reports (for super_admin only)
+export const getPaymentReports = (): Promise<Reservation[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([...reservations]);
     }, 300);
   });
 };

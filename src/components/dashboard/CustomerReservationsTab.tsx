@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { getUserReservations, Reservation, cancelReservation } from '@/data/reservationData';
+import { getUserReservations, Reservation, cancelReservation, updatePaymentStatus } from '@/data/reservationData';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Info, Users, X } from 'lucide-react';
+import { Calendar, Clock, Info, Users, X, DollarSign, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
 import { 
@@ -75,6 +75,19 @@ const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userI
     }
   };
 
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return <Badge className="bg-green-500">Paid</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500">Payment Pending</Badge>;
+      case 'refunded':
+        return <Badge className="bg-blue-500">Refunded</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading your reservations...</div>;
   }
@@ -103,13 +116,16 @@ const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userI
                 <CardTitle className="text-xl">
                   {format(parseISO(reservation.date), 'MMMM dd, yyyy')}
                 </CardTitle>
-                <Badge className={`
-                  ${reservation.status === 'confirmed' ? 'bg-green-500' : ''}
-                  ${reservation.status === 'pending' ? 'bg-amber-500' : ''}
-                  ${reservation.status === 'cancelled' ? 'bg-red-500' : ''}
-                `}>
-                  {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
-                </Badge>
+                <div className="flex flex-col items-end gap-2">
+                  <Badge className={`
+                    ${reservation.status === 'confirmed' ? 'bg-green-500' : ''}
+                    ${reservation.status === 'pending' ? 'bg-amber-500' : ''}
+                    ${reservation.status === 'cancelled' ? 'bg-red-500' : ''}
+                  `}>
+                    {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                  </Badge>
+                  {getPaymentStatusBadge(reservation.paymentStatus)}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pb-2">
@@ -122,8 +138,10 @@ const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userI
                   <Users className="h-4 w-4 mr-2" />
                   <span>{reservation.guests} {reservation.guests === 1 ? 'guest' : 'guests'}</span>
                 </div>
-                
-                {/* Remove tableNumber reference as it doesn't exist in the Reservation type */}
+                <div className="flex items-center text-muted-foreground">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  <span>${reservation.paymentAmount.toFixed(2)}</span>
+                </div>
                 
                 {reservation.specialRequests && (
                   <div className="flex items-start text-muted-foreground mt-2">
@@ -133,7 +151,7 @@ const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userI
                 )}
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col gap-2">
               {(reservation.status === 'pending' || reservation.status === 'confirmed') && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,13 +11,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon, Users } from 'lucide-react';
+import { CalendarIcon, Users, DollarSign, CreditCard } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { createReservation, getAvailableTables } from '@/data/reservationData';
+import { createReservation, getAvailableTables, Table } from '@/data/reservationData';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const timeSlots = [
   '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', 
@@ -34,6 +35,7 @@ const formSchema = z.object({
   date: z.date({ required_error: 'Please select a date.' }),
   time: z.string({ required_error: 'Please select a time.' }),
   guests: z.string().min(1, { message: 'Please select the number of guests.' }),
+  tableId: z.number().optional(),
   specialRequests: z.string().optional(),
 });
 
@@ -44,7 +46,20 @@ const Reservation = () => {
   const { user, isCustomer } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTableId, setAvailableTableId] = useState<number | null>(null);
+  const [availableTables, setAvailableTables] = useState<Table[]>([]);
+  const [selectedGuests, setSelectedGuests] = useState<string>('2');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
+  const [estimatedCost, setEstimatedCost] = useState<number>(40); // Default $20 per guest
+
+  // Redirect if logged in user tries to access login/register pages
+  if (user) {
+    if (window.location.pathname === '/login' || 
+        window.location.pathname === '/register' || 
+        window.location.pathname === '/customer-login') {
+      return <Navigate to="/" />;
+    }
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -64,6 +79,33 @@ const Reservation = () => {
       form.setValue('email', user.email);
     }
   }, [user, form]);
+
+  // Update estimated cost when guests change
+  useEffect(() => {
+    const guestCount = parseInt(selectedGuests) || 2;
+    setEstimatedCost(guestCount * 20); // $20 per guest
+  }, [selectedGuests]);
+
+  // Fetch available tables when date, time, and guests are selected
+  useEffect(() => {
+    const fetchAvailableTables = async () => {
+      if (!selectedDate || !selectedTime || !selectedGuests) return;
+      
+      try {
+        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        const tables = await getAvailableTables(
+          formattedDate, 
+          selectedTime, 
+          parseInt(selectedGuests)
+        );
+        setAvailableTables(tables);
+      } catch (error) {
+        console.error('Error fetching available tables:', error);
+      }
+    };
+
+    fetchAvailableTables();
+  }, [selectedDate, selectedTime, selectedGuests]);
 
   const onSubmit = async (values: FormValues) => {
     // If not logged in, redirect to login
@@ -106,7 +148,7 @@ const Reservation = () => {
         time: values.time,
         guests: parseInt(values.guests),
         specialRequests: values.specialRequests || '',
-        tableId: tableId // Add the tableId property
+        tableId: tableId
       });
 
       toast({
@@ -225,7 +267,13 @@ const Reservation = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Number of Guests</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedGuests(value);
+                          }} 
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select number of guests" />
@@ -272,7 +320,10 @@ const Reservation = () => {
                             <Calendar
                               mode="single"
                               selected={field.value}
-                              onSelect={field.onChange}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setSelectedDate(date);
+                              }}
                               disabled={(date) => date < new Date()}
                               initialFocus
                             />
@@ -288,7 +339,13 @@ const Reservation = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Time</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedTime(value);
+                          }} 
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select time" />
@@ -307,6 +364,39 @@ const Reservation = () => {
                     )}
                   />
                 </div>
+                
+                {availableTables.length > 0 && (
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="tableId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select a Table</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a table" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableTables.map((table) => (
+                                <SelectItem key={table.id} value={table.id.toString()}>
+                                  {table.name} (Seats {table.capacity})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+                
                 <FormField
                   control={form.control}
                   name="specialRequests"
@@ -324,6 +414,18 @@ const Reservation = () => {
                     </FormItem>
                   )}
                 />
+                
+                <Alert className="bg-muted">
+                  <CreditCard className="h-4 w-4" />
+                  <AlertTitle className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Estimated Cost: ${estimatedCost.toFixed(2)}
+                  </AlertTitle>
+                  <AlertDescription>
+                    Payment will be collected at the restaurant. A $20 per person minimum spend applies.
+                  </AlertDescription>
+                </Alert>
+                
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Reserve Table"}
                 </Button>

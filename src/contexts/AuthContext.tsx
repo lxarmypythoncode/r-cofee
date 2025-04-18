@@ -1,6 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, getCurrentUser, setCurrentUser, getAllUsers } from '@/data/userData';
 import { toast } from '@/hooks/use-toast';
+import { Navigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
