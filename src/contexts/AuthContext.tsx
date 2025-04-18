@@ -43,9 +43,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event, session);
-        // We'll keep using our local auth system for now, but we're connecting to Supabase
+        if (event === 'SIGNED_IN' && session?.user) {
+          // If user signs in with Supabase but we don't have local user data,
+          // we'll keep using our local system for now
+          if (!storedUser) {
+            // Here we could fetch user data from a Supabase profile table if needed
+            console.log("User signed in with Supabase:", session.user);
+          }
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          // If user signs out of Supabase, we'll sign them out locally too
+          if (storedUser) {
+            setUser(null);
+            setCurrentUser(null);
+          }
+        }
       }
     );
+    
+    // Initialize Supabase auth session
+    const initializeSupabase = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Supabase session error:", error);
+        } else if (data.session) {
+          console.log("Found existing Supabase session:", data.session);
+          // Here we could sync with our local auth if needed
+        }
+      } catch (err) {
+        console.error("Error initializing Supabase auth:", err);
+      }
+    };
+    
+    initializeSupabase();
     
     // Load all users data
     getAllUserData();
@@ -57,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = (userData: User) => {
+  const login = async (userData: User) => {
     // Check if the user is a cashier with pending status
     if (userData.role === 'cashier' && userData.status === 'pending') {
       console.log("Rejecting login for pending cashier:", userData);
@@ -72,6 +104,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Log successful login
     console.log("Login successful for:", userData);
     
+    // Try to sign in with Supabase if email and password are available
+    // This is a basic integration - in a real app, you'd need to properly handle auth
+    if (userData.email && userData.password) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: userData.password,
+        });
+        
+        if (error) {
+          console.error("Supabase login error:", error);
+        } else {
+          console.log("Supabase auth successful:", data);
+        }
+      } catch (err) {
+        console.error("Error with Supabase login:", err);
+      }
+    }
+    
     setUser(userData);
     setCurrentUser(userData);
     toast({
@@ -83,7 +134,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getAllUserData();
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Also sign out from Supabase
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out from Supabase:", error);
+      }
+    } catch (err) {
+      console.error("Supabase signout error:", err);
+    }
+    
     setUser(null);
     setCurrentUser(null);
     toast({

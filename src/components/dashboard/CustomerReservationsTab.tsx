@@ -149,6 +149,21 @@ const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userI
                     <span className="text-sm">{reservation.specialRequests}</span>
                   </div>
                 )}
+                
+                {reservation.paymentStatus === 'pending' && (
+                  <div className="mt-4 p-3 bg-amber-50 rounded-md border border-amber-200">
+                    <h4 className="font-medium text-amber-800 flex items-center">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Payment Instructions
+                    </h4>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Please make a payment to our company account:<br />
+                      <strong>Bank Account:</strong> 1234-5678-9012-3456<br />
+                      <strong>Amount:</strong> ${reservation.paymentAmount.toFixed(2)}<br />
+                      <strong>Reference:</strong> RES-{reservation.id}
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
