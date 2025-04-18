@@ -1,4 +1,3 @@
-
 // User authentication and roles management
 
 export interface User {
@@ -129,10 +128,16 @@ export const setCurrentUser = (user: User | null): void => {
   }
 };
 
-// Get all users from the system (without passwords)
-export const getAllUsers = (): Promise<User[]> => {
+// Get all users (restricted by role)
+export const getAllUsers = async (requestingUser: User | null): Promise<User[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
+      // Only super_admin can see all users
+      if (!requestingUser || requestingUser.role !== 'super_admin') {
+        resolve([]);
+        return;
+      }
+
       const usersWithoutPasswords = users.map(user => {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;

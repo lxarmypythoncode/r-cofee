@@ -4,15 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, ShoppingBag, Calendar, User, LogOut, Users } from 'lucide-react';
+import { Bell, ShoppingBag, Calendar, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getUserNotifications, markNotificationAsRead, Notification } from '@/data/notificationsData';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import CustomerOrderTab from '@/components/dashboard/CustomerOrderTab';
 import CustomerReservationsTab from '@/components/dashboard/CustomerReservationsTab';
 
 const CustomerDashboard = () => {
-  const { user, logout, isCustomer, allUsers, getAllUserData } = useAuth();
+  const { user, logout, isCustomer } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('orders');
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -43,13 +43,6 @@ const CustomerDashboard = () => {
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [user]);
-
-  // Refresh user list when the component mounts or when activeTab changes to 'users'
-  useEffect(() => {
-    if (activeTab === 'users') {
-      getAllUserData();
-    }
-  }, [activeTab, getAllUserData]);
 
   const handleLogout = () => {
     logout();
@@ -120,10 +113,6 @@ const CustomerDashboard = () => {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="users" className="flex gap-2">
-                <Users className="h-4 w-4" />
-                <span>All Users</span>
-              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="orders">
@@ -169,45 +158,6 @@ const CustomerDashboard = () => {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="users">
-              <Card>
-                <CardHeader>
-                  <CardTitle>All Users</CardTitle>
-                  <CardDescription>
-                    View all registered users in the system
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="px-4 py-2 text-left">ID</th>
-                          <th className="px-4 py-2 text-left">Name</th>
-                          <th className="px-4 py-2 text-left">Email</th>
-                          <th className="px-4 py-2 text-left">Role</th>
-                          <th className="px-4 py-2 text-left">Status</th>
-                          <th className="px-4 py-2 text-left">Joined</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allUsers.map((user) => (
-                          <tr key={user.id} className="border-b hover:bg-gray-50">
-                            <td className="px-4 py-2">{user.id}</td>
-                            <td className="px-4 py-2">{user.name}</td>
-                            <td className="px-4 py-2">{user.email}</td>
-                            <td className="px-4 py-2 capitalize">{user.role.replace('_', ' ')}</td>
-                            <td className="px-4 py-2 capitalize">{user.status || 'approved'}</td>
-                            <td className="px-4 py-2">{format(new Date(user.createdAt), 'MMM dd, yyyy')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

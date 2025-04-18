@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, getCurrentUser, setCurrentUser, getAllUsers } from '@/data/userData';
 import { toast } from '@/hooks/use-toast';
@@ -24,9 +23,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get all users
+  // Get all users (only for super_admin)
   const getAllUserData = async () => {
-    const users = await getAllUsers();
+    const users = await getAllUsers(user);
     setAllUsers(users);
     return users;
   };
