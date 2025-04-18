@@ -29,7 +29,7 @@ interface ReservationsTabProps {
 const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -119,7 +119,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
         userId: updatedReservation.userId,
         title,
         message,
-        type: 'payment',
+        type: 'reservation',
         status: 'unread'
       });
       
@@ -201,7 +201,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
     <div>
       <h2 className="text-2xl font-semibold mb-4">Reservations</h2>
       
-      {isSuperAdmin(userRole) && (
+      {isSuperAdmin(user) && (
         <div className="mb-6 p-4 bg-white rounded-lg border shadow-sm">
           <h3 className="text-lg font-medium mb-2 flex items-center">
             <DollarSign className="mr-2 h-5 w-5 text-green-600" />

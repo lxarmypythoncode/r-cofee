@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, getCurrentUser, setCurrentUser, getAllUsers } from '@/data/userData';
 import { toast } from '@/hooks/use-toast';
 import { Navigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -39,10 +39,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(storedUser);
     }
     
+    // Set up auth state change listener for Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, session);
+        // We'll keep using our local auth system for now, but we're connecting to Supabase
+      }
+    );
+    
     // Load all users data
     getAllUserData();
     
     setIsLoading(false);
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = (userData: User) => {
