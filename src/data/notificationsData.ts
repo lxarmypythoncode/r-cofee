@@ -1,8 +1,7 @@
-
 // Notifications system
 
 export interface Notification {
-  id: string;
+  id: string;  // Change from number to string to match usage
   userId: string;
   title: string;
   message: string;
@@ -11,10 +10,10 @@ export interface Notification {
   createdAt: string;
 }
 
-// Sample notifications
+// Update the implementation to use string IDs
 let notifications: Notification[] = [
   {
-    id: '1',
+    id: '1',  // Ensure string ID
     userId: '3',
     title: 'Reservation Confirmed',
     message: 'Your reservation for 2 guests on Apr 18 at 7:00 PM has been confirmed.',
@@ -33,12 +32,23 @@ let notifications: Notification[] = [
   },
 ];
 
-// Get notifications for a user
+// Modify functions to use string IDs
 export const getUserNotifications = (userId: string): Promise<Notification[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const userNotifications = notifications.filter((n) => n.userId === userId);
       resolve(userNotifications);
+    }, 300);
+  });
+};
+
+export const markNotificationAsRead = (id: string): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      notifications = notifications.map((n) => 
+        n.id === id ? { ...n, status: 'read' } : n
+      );
+      resolve();
     }, 300);
   });
 };
@@ -54,18 +64,6 @@ export const createNotification = (notification: Omit<Notification, 'id' | 'crea
       };
       notifications.push(newNotification);
       resolve(newNotification);
-    }, 300);
-  });
-};
-
-// Mark notification as read
-export const markNotificationAsRead = (id: string): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      notifications = notifications.map((n) => 
-        n.id === id ? { ...n, status: 'read' } : n
-      );
-      resolve();
     }, 300);
   });
 };
