@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -83,7 +82,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
           message = `Your reservation status has been updated to ${status}.`;
       }
       
-      // Use userId as string
+      // Make sure userId is a string when passed to createNotification
       await createNotification({
         userId: updatedReservation.userId,
         title,
@@ -120,7 +119,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
       let title = 'Payment Update';
       let message = `Your payment for reservation on ${format(parseISO(updatedReservation.date), 'MMM dd')} at ${updatedReservation.time} has been marked as ${paymentStatus}.`;
       
-      // Use userId as string
+      // Make sure userId is a string when passed to createNotification
       await createNotification({
         userId: updatedReservation.userId,
         title,
@@ -145,7 +144,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   // Send a notification to a customer
   const sendCustomNotification = async (userId: string, reservationDetails: string) => {
     try {
-      // Use userId as string
+      // Make sure userId is a string when passed to createNotification
       await createNotification({
         userId,
         title: 'Message from R-Coffee',

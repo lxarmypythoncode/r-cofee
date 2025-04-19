@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -52,7 +51,6 @@ const Reservation = () => {
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [estimatedCost, setEstimatedCost] = useState<number>(40); // Default $20 per guest
 
-  // Redirect if logged in user tries to access login/register pages
   if (user) {
     if (window.location.pathname === '/login' || 
         window.location.pathname === '/register' || 
@@ -73,20 +71,17 @@ const Reservation = () => {
   });
 
   useEffect(() => {
-    // If user is logged in, pre-fill the form
     if (user) {
       form.setValue('name', user.name);
       form.setValue('email', user.email);
     }
   }, [user, form]);
 
-  // Update estimated cost when guests change
   useEffect(() => {
     const guestCount = parseInt(selectedGuests) || 2;
     setEstimatedCost(guestCount * 20); // $20 per guest
   }, [selectedGuests]);
 
-  // Fetch available tables when date, time, and guests are selected
   useEffect(() => {
     const fetchAvailableTables = async () => {
       if (!selectedDate || !selectedTime || !selectedGuests) return;
@@ -108,7 +103,6 @@ const Reservation = () => {
   }, [selectedDate, selectedTime, selectedGuests]);
 
   const onSubmit = async (values: FormValues) => {
-    // If not logged in, redirect to login
     if (!user) {
       toast({
         title: "Login Required",
@@ -122,7 +116,6 @@ const Reservation = () => {
     setIsSubmitting(true);
 
     try {
-      // Find an available table for the reservation
       const selectedDate = format(values.date, 'yyyy-MM-dd');
       const availableTables = await getAvailableTables(selectedDate, values.time, parseInt(values.guests));
       
@@ -136,11 +129,10 @@ const Reservation = () => {
         return;
       }
       
-      // Select the first available table
       const tableId = availableTables[0].id;
       
       await createReservation({
-        userId: user.id, // Use as string since that's what the API expects
+        userId: user.id,
         name: values.name,
         email: values.email,
         phone: values.phone,
@@ -156,7 +148,6 @@ const Reservation = () => {
         description: "Your table reservation has been received. We'll confirm it shortly.",
       });
 
-      // Clear the form
       form.reset({
         name: user.name,
         email: user.email,
@@ -165,7 +156,6 @@ const Reservation = () => {
         specialRequests: '',
       });
 
-      // If customer, redirect to their dashboard
       if (isCustomer(user)) {
         navigate('/customer-dashboard');
       }

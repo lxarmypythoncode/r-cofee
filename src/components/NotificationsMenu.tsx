@@ -37,7 +37,7 @@ const NotificationsMenu = () => {
     return () => clearInterval(interval);
   }, [user]);
 
-  const handleNotificationClick = async (id: number) => {
+  const handleNotificationClick = async (id: string) => {
     try {
       await markNotificationAsRead(id);
       setNotifications(prevNotifications => 

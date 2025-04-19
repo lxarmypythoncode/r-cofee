@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,7 +83,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
     setIsLoading(true);
     
     try {
-      // Pass userId as string since that's what the API expects
       await createNotification({
         userId: selectedUserId,
         title,
@@ -195,7 +193,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
                     <SelectGroup>
                       <SelectLabel>Customers</SelectLabel>
                       {customers.map(customer => (
-                        <SelectItem key={customer.id} value={String(customer.id)}>
+                        <SelectItem key={customer.id} value={customer.id}>
                           {customer.name} ({customer.email})
                         </SelectItem>
                       ))}
