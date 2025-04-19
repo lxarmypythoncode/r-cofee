@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,7 +29,7 @@ const CustomerDashboard = () => {
       if (user) {
         try {
           // Ensure user.id is treated as a string
-          const userNotifications = await getUserNotifications(user.id);
+          const userNotifications = await getUserNotifications(String(user.id));
           setNotifications(userNotifications);
           setUnreadCount(userNotifications.filter(n => n.status === 'unread').length);
         } catch (error) {
@@ -118,11 +117,11 @@ const CustomerDashboard = () => {
             </TabsList>
             
             <TabsContent value="orders">
-              <CustomerOrderTab userId={user.id} />
+              <CustomerOrderTab userId={String(user.id)} />
             </TabsContent>
             
             <TabsContent value="reservations">
-              <CustomerReservationsTab userId={user.id} />
+              <CustomerReservationsTab userId={String(user.id)} />
             </TabsContent>
             
             <TabsContent value="notifications">
