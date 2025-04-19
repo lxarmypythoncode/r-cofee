@@ -9,10 +9,131 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: number
+          reservation_id: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: number
+          reservation_id?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: number
+          reservation_id?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservations: {
+        Row: {
+          created_at: string | null
+          date: string
+          email: string
+          guests: number
+          id: number
+          name: string
+          phone: string
+          special_requests: string | null
+          status: string
+          table_id: number
+          time: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          email: string
+          guests: number
+          id?: number
+          name: string
+          phone: string
+          special_requests?: string | null
+          status?: string
+          table_id: number
+          time: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          email?: string
+          guests?: number
+          id?: number
+          name?: string
+          phone?: string
+          special_requests?: string | null
+          status?: string
+          table_id?: number
+          time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tables: {
+        Row: {
+          capacity: number
+          id: number
+          is_available: boolean
+          name: string
+        }
+        Insert: {
+          capacity: number
+          id?: number
+          is_available?: boolean
+          name: string
+        }
+        Update: {
+          capacity?: number
+          id?: number
+          is_available?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      payment_reports: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          customer_name: string | null
+          id: number | null
+          reservation_date: string | null
+          reservation_id: number | null
+          reservation_time: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
