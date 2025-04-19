@@ -132,7 +132,7 @@ const Reservation = () => {
       const tableId = availableTables[0].id;
       
       await createReservation({
-        userId: user.id,
+        userId: user.id, // Ensure this is a string
         name: values.name,
         email: values.email,
         phone: values.phone,
@@ -171,6 +171,7 @@ const Reservation = () => {
     }
   };
 
+  
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-3xl mx-auto">

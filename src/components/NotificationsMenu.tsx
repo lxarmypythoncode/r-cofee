@@ -21,6 +21,7 @@ const NotificationsMenu = () => {
     const fetchNotifications = async () => {
       if (user) {
         try {
+          // Ensure we're passing a string, not a number
           const userNotifications = await getUserNotifications(user.id);
           setNotifications(userNotifications);
         } catch (error) {

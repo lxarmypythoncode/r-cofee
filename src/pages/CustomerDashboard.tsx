@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,7 @@ const CustomerDashboard = () => {
     const fetchNotifications = async () => {
       if (user) {
         try {
+          // Ensure user.id is treated as a string
           const userNotifications = await getUserNotifications(user.id);
           setNotifications(userNotifications);
           setUnreadCount(userNotifications.filter(n => n.status === 'unread').length);
