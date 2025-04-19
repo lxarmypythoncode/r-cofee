@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getUserReservations, Reservation, cancelReservation, updatePaymentStatus } from '@/data/reservationData';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +19,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 
 interface CustomerReservationsTabProps {
-  userId: number;
+  userId: string;
 }
 
 const CustomerReservationsTab: React.FC<CustomerReservationsTabProps> = ({ userId }) => {

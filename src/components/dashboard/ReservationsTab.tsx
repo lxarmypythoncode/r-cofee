@@ -54,6 +54,8 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
     try {
       const updatedReservation = await updateReservationStatus(id, status);
       
+      if (!updatedReservation) return;
+      
       // Update the reservations list
       setReservations(prevReservations => 
         prevReservations.map(res => res.id === id ? updatedReservation : res)
@@ -106,6 +108,8 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
     try {
       const updatedReservation = await updatePaymentStatus(id, paymentStatus);
       
+      if (!updatedReservation) return;
+      
       // Update the reservations list
       setReservations(prevReservations => 
         prevReservations.map(res => res.id === id ? updatedReservation : res)
@@ -137,7 +141,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   };
 
   // Send a notification to a customer
-  const sendCustomNotification = async (userId: number, reservationDetails: string) => {
+  const sendCustomNotification = async (userId: string, reservationDetails: string) => {
     try {
       await createNotification({
         userId,

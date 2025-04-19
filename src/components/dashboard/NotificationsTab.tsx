@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
   const [message, setMessage] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedReservation, setSelectedReservation] = useState('');
-  const [customers, setCustomers] = useState<{ id: number; name: string; email: string }[]>([]);
+  const [customers, setCustomers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,7 +45,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
         const reservationData = await getAllReservations();
         setReservations(reservationData);
         
-        const uniqueCustomers = reservationData.reduce<{ id: number; name: string; email: string }[]>((acc, reservation) => {
+        const uniqueCustomers = reservationData.reduce<{ id: string; name: string; email: string }[]>((acc, reservation) => {
           if (!acc.some(c => c.id === reservation.userId)) {
             acc.push({
               id: reservation.userId,
@@ -84,7 +85,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
     
     try {
       await createNotification({
-        userId: parseInt(selectedUserId),
+        userId: selectedUserId,
         title,
         message,
         type: 'system',
@@ -130,7 +131,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
     
     const reservation = reservations.find(r => r.id.toString() === reservationId);
     if (reservation) {
-      setSelectedUserId(reservation.userId.toString());
+      setSelectedUserId(reservation.userId);
       setTitle(`Update on Your Reservation for ${format(parseISO(reservation.date), 'MMM dd')}`);
       setMessage(`Regarding your reservation for ${reservation.guests} guests on ${format(parseISO(reservation.date), 'MMMM dd, yyyy')} at ${reservation.time}: `);
     }

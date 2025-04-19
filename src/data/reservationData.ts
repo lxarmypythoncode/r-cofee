@@ -119,8 +119,8 @@ export const createReservation = async (data: Omit<Reservation, 'id' | 'createdA
       guests: newReservation.guests,
       tableId: newReservation.table_id,
       specialRequests: newReservation.special_requests,
-      status: newReservation.status,
-      paymentStatus: payment?.status || 'pending',
+      status: newReservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
+      paymentStatus: payment?.status as 'pending' | 'paid' | 'refunded' || 'pending',
       paymentAmount: payment?.amount || paymentAmount,
       createdAt: newReservation.created_at
     };
@@ -160,8 +160,8 @@ export const getUserReservations = async (userId: string | number): Promise<Rese
       guests: reservation.guests,
       tableId: reservation.table_id,
       specialRequests: reservation.special_requests,
-      status: reservation.status,
-      paymentStatus: reservation.payments?.[0]?.status || 'pending',
+      status: reservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
+      paymentStatus: reservation.payments?.[0]?.status as 'pending' | 'paid' | 'refunded' || 'pending',
       paymentAmount: reservation.payments?.[0]?.amount || (reservation.guests * 20),
       createdAt: reservation.created_at
     }));
@@ -201,8 +201,8 @@ export const getAllReservations = async (): Promise<Reservation[]> => {
       guests: reservation.guests,
       tableId: reservation.table_id,
       specialRequests: reservation.special_requests,
-      status: reservation.status,
-      paymentStatus: reservation.payments?.[0]?.status || 'pending',
+      status: reservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
+      paymentStatus: reservation.payments?.[0]?.status as 'pending' | 'paid' | 'refunded' || 'pending',
       paymentAmount: reservation.payments?.[0]?.amount || (reservation.guests * 20),
       createdAt: reservation.created_at
     }));
@@ -244,8 +244,8 @@ export const updateReservationStatus = async (id: number, status: Reservation['s
       guests: updatedReservation.guests,
       tableId: updatedReservation.table_id,
       specialRequests: updatedReservation.special_requests,
-      status: updatedReservation.status,
-      paymentStatus: updatedReservation.payments?.[0]?.status || 'pending',
+      status: updatedReservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
+      paymentStatus: updatedReservation.payments?.[0]?.status as 'pending' | 'paid' | 'refunded' || 'pending',
       paymentAmount: updatedReservation.payments?.[0]?.amount || (updatedReservation.guests * 20),
       createdAt: updatedReservation.created_at
     };
@@ -302,7 +302,7 @@ export const updatePaymentStatus = async (id: number, paymentStatus: Reservation
       guests: reservation.guests,
       tableId: reservation.table_id,
       specialRequests: reservation.special_requests,
-      status: reservation.status,
+      status: reservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
       paymentStatus: paymentStatus,
       paymentAmount: reservation.payments?.[0]?.amount || (reservation.guests * 20),
       createdAt: reservation.created_at
