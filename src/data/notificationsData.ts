@@ -2,8 +2,8 @@
 // Notifications system
 
 export interface Notification {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   title: string;
   message: string;
   type: 'reservation' | 'order' | 'system';
@@ -14,8 +14,8 @@ export interface Notification {
 // Sample notifications
 let notifications: Notification[] = [
   {
-    id: 1,
-    userId: 3,
+    id: '1',
+    userId: '3',
     title: 'Reservation Confirmed',
     message: 'Your reservation for 2 guests on Apr 18 at 7:00 PM has been confirmed.',
     type: 'reservation',
@@ -23,8 +23,8 @@ let notifications: Notification[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    id: 2,
-    userId: 3,
+    id: '2',
+    userId: '3',
     title: 'Special Offer',
     message: 'Enjoy 15% off on all premium coffee drinks this weekend!',
     type: 'system',
@@ -34,7 +34,7 @@ let notifications: Notification[] = [
 ];
 
 // Get notifications for a user
-export const getUserNotifications = (userId: number): Promise<Notification[]> => {
+export const getUserNotifications = (userId: string): Promise<Notification[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const userNotifications = notifications.filter((n) => n.userId === userId);
@@ -49,7 +49,7 @@ export const createNotification = (notification: Omit<Notification, 'id' | 'crea
     setTimeout(() => {
       const newNotification: Notification = {
         ...notification,
-        id: notifications.length + 1,
+        id: String(notifications.length + 1),
         createdAt: new Date().toISOString(),
       };
       notifications.push(newNotification);
@@ -59,7 +59,7 @@ export const createNotification = (notification: Omit<Notification, 'id' | 'crea
 };
 
 // Mark notification as read
-export const markNotificationAsRead = (id: number): Promise<void> => {
+export const markNotificationAsRead = (id: string): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       notifications = notifications.map((n) => 
