@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,6 +69,7 @@ const CustomerDashboard = () => {
   }
 
   return (
+    
     <div className="container mx-auto py-6">
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/6">
