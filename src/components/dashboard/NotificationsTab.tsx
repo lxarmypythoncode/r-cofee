@@ -84,8 +84,9 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
     setIsLoading(true);
     
     try {
+      // Pass userId as string since that's what the API expects
       await createNotification({
-        userId: selectedUserId, // This is correct as string
+        userId: selectedUserId,
         title,
         message,
         type: 'system',

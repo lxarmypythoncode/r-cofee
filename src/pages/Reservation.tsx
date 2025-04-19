@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -139,7 +140,7 @@ const Reservation = () => {
       const tableId = availableTables[0].id;
       
       await createReservation({
-        userId: user.id,
+        userId: user.id, // Use as string since that's what the API expects
         name: values.name,
         email: values.email,
         phone: values.phone,

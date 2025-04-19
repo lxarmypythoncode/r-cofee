@@ -49,7 +49,7 @@ const CustomerDashboard = () => {
     navigate('/login');
   };
 
-  const handleMarkAsRead = async (id: number) => {
+  const handleMarkAsRead = async (id: string) => {
     try {
       await markNotificationAsRead(id);
       setNotifications(prevNotifications => 

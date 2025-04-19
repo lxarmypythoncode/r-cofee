@@ -83,8 +83,9 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
           message = `Your reservation status has been updated to ${status}.`;
       }
       
+      // Use userId as string
       await createNotification({
-        userId: updatedReservation.userId, // This is correctly using string
+        userId: updatedReservation.userId,
         title,
         message,
         type: 'reservation',
@@ -119,8 +120,9 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
       let title = 'Payment Update';
       let message = `Your payment for reservation on ${format(parseISO(updatedReservation.date), 'MMM dd')} at ${updatedReservation.time} has been marked as ${paymentStatus}.`;
       
+      // Use userId as string
       await createNotification({
-        userId: updatedReservation.userId, // This is correctly using string
+        userId: updatedReservation.userId,
         title,
         message,
         type: 'reservation',
@@ -143,8 +145,9 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   // Send a notification to a customer
   const sendCustomNotification = async (userId: string, reservationDetails: string) => {
     try {
+      // Use userId as string
       await createNotification({
-        userId, // This is correctly using string
+        userId,
         title: 'Message from R-Coffee',
         message: `Regarding your reservation ${reservationDetails}: We're looking forward to seeing you! Please call us if you need to make any changes.`,
         type: 'system',
