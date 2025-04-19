@@ -9,131 +9,120 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      payments: {
+      menu_items: {
         Row: {
-          amount: number
-          created_at: string | null
+          category: string
+          description: string
           id: number
-          reservation_id: number | null
-          status: string
-          user_id: string
+          image: string
+          name: string
+          price: number
         }
         Insert: {
-          amount: number
-          created_at?: string | null
+          category: string
+          description: string
           id?: number
-          reservation_id?: number | null
-          status?: string
-          user_id: string
+          image: string
+          name: string
+          price: number
         }
         Update: {
-          amount?: number
-          created_at?: string | null
+          category?: string
+          description?: string
           id?: number
-          reservation_id?: number | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservations: {
-        Row: {
-          created_at: string | null
-          date: string
-          email: string
-          guests: number
-          id: number
-          name: string
-          phone: string
-          special_requests: string | null
-          status: string
-          table_id: number
-          time: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          date: string
-          email: string
-          guests: number
-          id?: number
-          name: string
-          phone: string
-          special_requests?: string | null
-          status?: string
-          table_id: number
-          time: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          date?: string
-          email?: string
-          guests?: number
-          id?: number
+          image?: string
           name?: string
-          phone?: string
-          special_requests?: string | null
+          price?: number
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          status: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
           status?: string
-          table_id?: number
-          time?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          status?: string
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
       }
-      tables: {
+      orders: {
         Row: {
-          capacity: number
+          created_at: string
           id: number
-          is_available: boolean
-          name: string
+          items: Json
+          status: string
+          total: number
+          user_id: string
         }
         Insert: {
-          capacity: number
+          created_at?: string
           id?: number
-          is_available?: boolean
-          name: string
+          items: Json
+          status: string
+          total: number
+          user_id: string
         }
         Update: {
-          capacity?: number
+          created_at?: string
           id?: number
-          is_available?: boolean
+          items?: Json
+          status?: string
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          role: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
           name?: string
+          role?: string
+          status?: string | null
         }
         Relationships: []
       }
     }
     Views: {
-      payment_reports: {
-        Row: {
-          amount: number | null
-          created_at: string | null
-          customer_name: string | null
-          id: number | null
-          reservation_date: string | null
-          reservation_id: number | null
-          reservation_time: string | null
-          status: string | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
