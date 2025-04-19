@@ -62,6 +62,22 @@ export const getAvailableTables = async (date: string, time: string, guests: num
   }
 };
 
+// Helper function to map status to valid status values
+const mapStatus = (status: string): 'pending' | 'confirmed' | 'finished' | 'cancelled' => {
+  if (status === 'pending' || status === 'confirmed' || status === 'finished' || status === 'cancelled') {
+    return status as 'pending' | 'confirmed' | 'finished' | 'cancelled';
+  }
+  return 'pending'; // Default fallback
+};
+
+// Helper function to map payment status to valid values
+const mapPaymentStatus = (status: string): 'pending' | 'paid' | 'refunded' => {
+  if (status === 'pending' || status === 'paid' || status === 'refunded') {
+    return status as 'pending' | 'paid' | 'refunded';
+  }
+  return 'pending'; // Default fallback
+};
+
 // Create a new reservation
 export const createReservation = async (data: Omit<Reservation, 'id' | 'createdAt' | 'status' | 'paymentStatus' | 'paymentAmount'>): Promise<Reservation | null> => {
   try {
@@ -119,8 +135,8 @@ export const createReservation = async (data: Omit<Reservation, 'id' | 'createdA
       guests: newReservation.guests,
       tableId: newReservation.table_id,
       specialRequests: newReservation.special_requests,
-      status: newReservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
-      paymentStatus: payment?.status as 'pending' | 'paid' | 'refunded' || 'pending',
+      status: mapStatus(newReservation.status),
+      paymentStatus: payment ? mapPaymentStatus(payment.status) : 'pending',
       paymentAmount: payment?.amount || paymentAmount,
       createdAt: newReservation.created_at
     };
@@ -131,7 +147,7 @@ export const createReservation = async (data: Omit<Reservation, 'id' | 'createdA
 };
 
 // Get user reservations
-export const getUserReservations = async (userId: string | number): Promise<Reservation[]> => {
+export const getUserReservations = async (userId: string): Promise<Reservation[]> => {
   try {
     const { data: reservations, error: reservationsError } = await supabase
       .from('reservations')
@@ -142,7 +158,7 @@ export const getUserReservations = async (userId: string | number): Promise<Rese
           amount
         )
       `)
-      .eq('user_id', userId.toString());
+      .eq('user_id', userId);
 
     if (reservationsError) {
       console.error('Error fetching reservations:', reservationsError);
@@ -160,8 +176,8 @@ export const getUserReservations = async (userId: string | number): Promise<Rese
       guests: reservation.guests,
       tableId: reservation.table_id,
       specialRequests: reservation.special_requests,
-      status: reservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
-      paymentStatus: reservation.payments?.[0]?.status as 'pending' | 'paid' | 'refunded' || 'pending',
+      status: mapStatus(reservation.status),
+      paymentStatus: reservation.payments?.[0]?.status ? mapPaymentStatus(reservation.payments[0].status) : 'pending',
       paymentAmount: reservation.payments?.[0]?.amount || (reservation.guests * 20),
       createdAt: reservation.created_at
     }));
@@ -201,8 +217,8 @@ export const getAllReservations = async (): Promise<Reservation[]> => {
       guests: reservation.guests,
       tableId: reservation.table_id,
       specialRequests: reservation.special_requests,
-      status: reservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
-      paymentStatus: reservation.payments?.[0]?.status as 'pending' | 'paid' | 'refunded' || 'pending',
+      status: mapStatus(reservation.status),
+      paymentStatus: reservation.payments?.[0]?.status ? mapPaymentStatus(reservation.payments[0].status) : 'pending',
       paymentAmount: reservation.payments?.[0]?.amount || (reservation.guests * 20),
       createdAt: reservation.created_at
     }));
@@ -244,8 +260,8 @@ export const updateReservationStatus = async (id: number, status: Reservation['s
       guests: updatedReservation.guests,
       tableId: updatedReservation.table_id,
       specialRequests: updatedReservation.special_requests,
-      status: updatedReservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
-      paymentStatus: updatedReservation.payments?.[0]?.status as 'pending' | 'paid' | 'refunded' || 'pending',
+      status: mapStatus(updatedReservation.status),
+      paymentStatus: updatedReservation.payments?.[0]?.status ? mapPaymentStatus(updatedReservation.payments[0].status) : 'pending',
       paymentAmount: updatedReservation.payments?.[0]?.amount || (updatedReservation.guests * 20),
       createdAt: updatedReservation.created_at
     };
@@ -302,8 +318,8 @@ export const updatePaymentStatus = async (id: number, paymentStatus: Reservation
       guests: reservation.guests,
       tableId: reservation.table_id,
       specialRequests: reservation.special_requests,
-      status: reservation.status as 'pending' | 'confirmed' | 'finished' | 'cancelled',
-      paymentStatus: paymentStatus,
+      status: mapStatus(reservation.status),
+      paymentStatus,
       paymentAmount: reservation.payments?.[0]?.amount || (reservation.guests * 20),
       createdAt: reservation.created_at
     };

@@ -85,7 +85,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
     
     try {
       await createNotification({
-        userId: selectedUserId,
+        userId: selectedUserId, // This is correct as string
         title,
         message,
         type: 'system',
