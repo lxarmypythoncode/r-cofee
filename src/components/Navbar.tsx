@@ -17,7 +17,7 @@ import {
 
 const Navbar = () => {
   const isMobile = useIsMobile();
-  const { user, logout, isStaff, isCustomer } = useAuth();
+  const { user, profile, logout, isStaff, isCustomer } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
@@ -139,7 +139,7 @@ const Navbar = () => {
                         }}
                       >
                         <LogOut className="h-4 w-4" />
-                        <span>Logout ({user.name})</span>
+                        <span>Logout ({profile?.name})</span>
                       </Button>
                     </>
                   ) : (
@@ -185,7 +185,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2">
                     <User className="h-4 w-4" />
-                    <span>{user.name}</span>
+                    <span>{profile?.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

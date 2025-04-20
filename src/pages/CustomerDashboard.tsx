@@ -12,7 +12,7 @@ import CustomerOrderTab from '@/components/dashboard/CustomerOrderTab';
 import CustomerReservationsTab from '@/components/dashboard/CustomerReservationsTab';
 
 const CustomerDashboard = () => {
-  const { user, logout, isCustomer } = useAuth();
+  const { user, profile, logout, isCustomer } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('orders');
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -88,7 +88,7 @@ const CustomerDashboard = () => {
           </div>
           <div className="flex flex-col gap-2">
             <div className="px-3 py-2 rounded-md bg-coffee text-white">
-              <p className="font-semibold">{user?.name}</p>
+              <p className="font-semibold">{profile?.name}</p>
               <p className="text-sm text-coffee-light capitalize">Customer</p>
             </div>
           </div>

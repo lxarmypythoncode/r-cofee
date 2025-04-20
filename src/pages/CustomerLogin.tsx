@@ -11,7 +11,6 @@ import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Coffee } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { verifyUser } from '@/data/userData';
 import { toast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
@@ -43,18 +42,8 @@ const CustomerLogin = () => {
     setIsLoading(true);
     
     try {
-      const user = await verifyUser(values.email, values.password);
-      
-      if (user && user.role === 'customer') {
-        login(user);
-        navigate('/customer-dashboard');
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password, or this account is not a customer account.",
-          variant: "destructive",
-        });
-      }
+      await login(values.email, values.password);
+      navigate('/customer-dashboard');
     } catch (error) {
       console.error('Login error:', error);
       toast({

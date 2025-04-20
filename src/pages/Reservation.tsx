@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -42,7 +43,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Reservation = () => {
   const { toast } = useToast();
-  const { user, isCustomer } = useAuth();
+  const { user, profile, isCustomer } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableTables, setAvailableTables] = useState<Table[]>([]);
@@ -62,8 +63,8 @@ const Reservation = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: user ? user.name : '',
-      email: user ? user.email : '',
+      name: profile ? profile.name : '',
+      email: profile ? profile.email : '',
       phone: '',
       guests: '2',
       specialRequests: '',
@@ -71,11 +72,11 @@ const Reservation = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      form.setValue('name', user.name);
-      form.setValue('email', user.email);
+    if (profile) {
+      form.setValue('name', profile.name);
+      form.setValue('email', profile.email);
     }
-  }, [user, form]);
+  }, [profile, form]);
 
   useEffect(() => {
     const guestCount = parseInt(selectedGuests) || 2;
@@ -149,8 +150,8 @@ const Reservation = () => {
       });
 
       form.reset({
-        name: user.name,
-        email: user.email,
+        name: profile?.name || '',
+        email: profile?.email || '',
         phone: '',
         guests: '2',
         specialRequests: '',

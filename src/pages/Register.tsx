@@ -2,15 +2,15 @@
 import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { registerUser } from '@/data/userData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Coffee } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Register = () => {
-  const { user, login } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -47,8 +47,19 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      const newUser = await registerUser(email, name, password, 'customer');
-      login(newUser);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+            role: 'customer'
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Registration Successful",
         description: "Your account has been created successfully!",

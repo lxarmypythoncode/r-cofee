@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { hasRole } from '@/data/userData';
 import ReservationsTab from '@/components/dashboard/ReservationsTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import SettingsTab from '@/components/dashboard/SettingsTab';
@@ -13,12 +12,12 @@ import { Clock, Bell, Settings, ShieldCheck, LogOut, ShoppingBag } from 'lucide-
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
-  const { user, isLoading, logout } = useAuth();
+  const { user, profile, isLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('reservations');
   const navigate = useNavigate();
 
   // If not logged in or not an admin/cashier/super_admin, redirect to login
-  if (!isLoading && (!user || !(hasRole(user, ['admin', 'cashier', 'super_admin'])))) {
+  if (!isLoading && (!user || !(profile?.role === 'admin' || profile?.role === 'cashier' || profile?.role === 'super_admin'))) {
     return <Navigate to="/login" />;
   }
 
@@ -50,8 +49,8 @@ const Dashboard = () => {
           </div>
           <div className="flex flex-col gap-2">
             <div className="px-3 py-2 rounded-md bg-coffee text-white">
-              <p className="font-semibold">{user?.name}</p>
-              <p className="text-sm text-coffee-light capitalize">{user?.role.replace('_', ' ')}</p>
+              <p className="font-semibold">{profile?.name}</p>
+              <p className="text-sm text-coffee-light capitalize">{profile?.role.replace('_', ' ')}</p>
             </div>
           </div>
         </div>
@@ -71,13 +70,13 @@ const Dashboard = () => {
                 <Bell className="h-4 w-4" />
                 <span>Notifications</span>
               </TabsTrigger>
-              {user?.role === 'admin' && (
+              {profile?.role === 'admin' && (
                 <TabsTrigger value="settings" className="flex gap-2">
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </TabsTrigger>
               )}
-              {user?.role === 'super_admin' && (
+              {profile?.role === 'super_admin' && (
                 <TabsTrigger value="super_admin" className="flex gap-2">
                   <ShieldCheck className="h-4 w-4" />
                   <span>Super Admin</span>
@@ -86,24 +85,24 @@ const Dashboard = () => {
             </TabsList>
             
             <TabsContent value="reservations">
-              <ReservationsTab userRole={user?.role} />
+              <ReservationsTab userRole={profile?.role} />
             </TabsContent>
             
             <TabsContent value="orders">
-              <OrdersTab userRole={user?.role} />
+              <OrdersTab userRole={profile?.role} />
             </TabsContent>
             
             <TabsContent value="notifications">
-              <NotificationsTab userRole={user?.role} />
+              <NotificationsTab userRole={profile?.role} />
             </TabsContent>
             
-            {user?.role === 'admin' && (
+            {profile?.role === 'admin' && (
               <TabsContent value="settings">
                 <SettingsTab />
               </TabsContent>
             )}
             
-            {user?.role === 'super_admin' && (
+            {profile?.role === 'super_admin' && (
               <TabsContent value="super_admin">
                 <SuperAdminTab />
               </TabsContent>

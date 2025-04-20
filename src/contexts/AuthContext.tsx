@@ -7,7 +7,7 @@ import { Tables } from '@/integrations/supabase/types';
 
 interface AuthContextType {
   user: User | null;
-  profile: Tables['profiles'] | null;
+  profile: Tables<'profiles'> | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Tables['profiles'] | null>(null);
+  const [profile, setProfile] = useState<Tables<'profiles'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
