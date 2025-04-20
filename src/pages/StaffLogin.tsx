@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const StaffLogin = () => {
   const { user, profile, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('super_admin@rcoffee.com');
+  const [email, setEmail] = useState('admin@example.com'); // Changed default email
   const [password, setPassword] = useState('admin123');
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -44,9 +44,9 @@ const StaffLogin = () => {
   const createSuperAdmin = async () => {
     setIsLoading(true);
     try {
-      // Create super admin user through sign up
+      // Create super admin user through sign up with a valid email domain
       const { data, error } = await supabase.auth.signUp({
-        email: 'super_admin@rcoffee.com',
+        email: 'admin@example.com', // Changed to a more universally accepted domain
         password: 'admin123',
         options: {
           data: {
@@ -66,7 +66,7 @@ const StaffLogin = () => {
       console.error("Create super admin error:", error);
       toast({
         title: "Error",
-        description: "An error occurred while creating super admin",
+        description: "An error occurred while creating super admin. Please try with a different email address.",
         variant: "destructive",
       });
     } finally {
@@ -161,7 +161,7 @@ const StaffLogin = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="staff@rcoffee.com"
+                placeholder="staff@example.com"
                 required
               />
             </div>
@@ -182,7 +182,7 @@ const StaffLogin = () => {
             </Button>
 
             <p className="text-sm text-center text-muted-foreground mt-2">
-              Super admin login: super_admin@rcoffee.com / password: admin123
+              Super admin login: admin@example.com / password: admin123
             </p>
             
             <div className="flex justify-between mt-4">
