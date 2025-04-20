@@ -66,19 +66,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
+      // Check if this is the admin account and we need to create it first
+      const isAdminAccount = email === 'admin@example.com' && password === 'admin123';
+      
+      // First, try to sign in
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      // If sign in fails for admin account, try to create it
+      if (error && isAdminAccount) {
+        console.log("Trying to create admin account first...");
+        const signUpResult = await supabase.auth.signUp({
+          email: 'admin@example.com',
+          password: 'admin123',
+          options: {
+            data: {
+              name: 'Super Admin',
+              role: 'super_admin'
+            }
+          }
+        });
+        
+        if (signUpResult.error) {
+          console.error("Failed to create admin account:", signUpResult.error);
+          throw new Error("Login failed and couldn't create admin account: " + signUpResult.error.message);
+        }
+        
+        // If signup worked, try to sign in again
+        const secondSignInAttempt = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (secondSignInAttempt.error) {
+          throw secondSignInAttempt.error;
+        }
+      } else if (error) {
+        // If there's still an error and it's not the admin account
+        throw error;
+      }
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Create a more descriptive error message
+      let errorMessage = "Invalid email or password";
+      if (error instanceof Error) {
+        if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please verify your email address before logging in";
+        } else if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. For super admin, try clicking 'Create Super Admin' first.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Login Failed",
-        description: "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
+      
       throw error;
     }
   };

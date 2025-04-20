@@ -13,11 +13,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const StaffLogin = () => {
   const { user, profile, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@example.com'); // Changed default email
+  const [email, setEmail] = useState('admin@example.com');
   const [password, setPassword] = useState('admin123');
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isPendingCashier, setIsPendingCashier] = useState(false);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
 
   // If already logged in, redirect to dashboard
   if (user) {
@@ -43,10 +44,11 @@ const StaffLogin = () => {
 
   const createSuperAdmin = async () => {
     setIsLoading(true);
+    setIsCreatingAdmin(true);
     try {
       // Create super admin user through sign up with a valid email domain
       const { data, error } = await supabase.auth.signUp({
-        email: 'admin@example.com', // Changed to a more universally accepted domain
+        email: 'admin@example.com',
         password: 'admin123',
         options: {
           data: {
@@ -56,21 +58,38 @@ const StaffLogin = () => {
         }
       });
       
-      if (error) throw error;
-      
-      toast({
-        title: "Super Admin Created",
-        description: "Super admin account has been created. Please check the email for verification if required.",
-      });
+      if (error) {
+        // Check if it's already registered error
+        if (error.message.includes("already registered")) {
+          toast({
+            title: "Account Exists",
+            description: "The super admin account already exists. You can now log in with it.",
+          });
+          setLoginError(null);
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Super Admin Created",
+          description: "Super admin account has been created. Please check the email for verification if required, or try logging in now.",
+        });
+      }
     } catch (error) {
       console.error("Create super admin error:", error);
+      let errorMsg = "An error occurred while creating super admin.";
+      if (error instanceof Error) {
+        errorMsg += " " + error.message;
+      }
       toast({
         title: "Error",
-        description: "An error occurred while creating super admin. Please try with a different email address.",
+        description: errorMsg,
         variant: "destructive",
       });
+      setLoginError(errorMsg);
     } finally {
       setIsLoading(false);
+      setIsCreatingAdmin(false);
     }
   };
 
@@ -96,10 +115,22 @@ const StaffLogin = () => {
       // Login successful - redirect happens via the useAuth hook when user state changes
     } catch (error: any) {
       console.error("Login error:", error);
-      setLoginError(error.message || "An error occurred during login");
+      
+      // Show a more helpful error message
+      let errorMessage = error.message || "An error occurred during login";
+      
+      if (errorMessage.includes("Invalid login credentials")) {
+        if (email === 'admin@example.com') {
+          errorMessage = "Super admin account not found or invalid password. Try clicking 'Create Super Admin' first.";
+        } else {
+          errorMessage = "Invalid email or password. Please check your credentials.";
+        }
+      }
+      
+      setLoginError(errorMessage);
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid credentials or insufficient permissions",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -178,20 +209,20 @@ const StaffLogin = () => {
             </div>
             
             <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading && !isCreatingAdmin ? "Logging in..." : "Login"}
             </Button>
 
             <p className="text-sm text-center text-muted-foreground mt-2">
               Super admin login: admin@example.com / password: admin123
             </p>
             
-            <div className="flex justify-between mt-4">
+            <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2">
               <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="flex items-center gap-1">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back</span>
               </Button>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-center">
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -206,10 +237,11 @@ const StaffLogin = () => {
                   variant="secondary" 
                   size="sm" 
                   onClick={createSuperAdmin} 
+                  disabled={isCreatingAdmin}
                   className="flex items-center gap-1"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  <span>Create Super Admin</span>
+                  <span>{isCreatingAdmin ? "Creating..." : "Create Super Admin"}</span>
                 </Button>
                 
                 <Link to="/cashier-register" className="text-sm text-coffee hover:underline flex items-center">
