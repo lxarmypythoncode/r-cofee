@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Coffee, Key, ArrowLeft, RefreshCcw, ShieldCheck } from 'lucide-react';
+import { Coffee, ArrowLeft, RefreshCcw, ShieldCheck } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const StaffLogin = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('super_admin@rcoffee.com');
   const [password, setPassword] = useState('admin123');
@@ -25,21 +26,10 @@ const StaffLogin = () => {
 
   const resetData = async () => {
     try {
-      // Delete existing users and reset data
-      const { data: { users }, error: fetchError } = await supabase.auth.admin.listUsers();
-      
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      for (const user of users) {
-        await supabase.auth.admin.deleteUser(user.id);
-      }
-
-      // Re-create default users if needed
+      // For now, just show a notification as we can't directly manage Supabase users
       toast({
-        title: "Data Reset",
-        description: "All user data has been reset.",
+        title: "Note",
+        description: "This would reset data in a real application.",
       });
     } catch (error) {
       console.error('Reset data error:', error);
@@ -48,6 +38,39 @@ const StaffLogin = () => {
         description: "Failed to reset data",
         variant: "destructive",
       });
+    }
+  };
+
+  const createSuperAdmin = async () => {
+    setIsLoading(true);
+    try {
+      // Create super admin user through sign up
+      const { data, error } = await supabase.auth.signUp({
+        email: 'super_admin@rcoffee.com',
+        password: 'admin123',
+        options: {
+          data: {
+            name: 'Super Admin',
+            role: 'super_admin'
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Super Admin Created",
+        description: "Super admin account has been created. Please check the email for verification if required.",
+      });
+    } catch (error) {
+      console.error("Create super admin error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating super admin",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,37 +91,15 @@ const StaffLogin = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      await login(email, password);
       
-      if (error) throw error;
-      
-      // Check profile status after successful login
-      if (profile?.role === 'cashier' && profile?.status === 'pending') {
-        setIsPendingCashier(true);
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-      
-      if (['admin', 'cashier', 'super_admin'].includes(profile?.role || '')) {
-        navigate('/dashboard');
-      } else {
-        setLoginError("Invalid credentials or insufficient permissions");
-        toast({
-          title: "Login Failed",
-          description: "Invalid credentials or insufficient permissions",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      // Login successful - redirect happens via the useAuth hook when user state changes
+    } catch (error: any) {
       console.error("Login error:", error);
-      setLoginError("An error occurred during login");
+      setLoginError(error.message || "An error occurred during login");
       toast({
-        title: "Error",
-        description: "An error occurred during login",
+        title: "Login Failed",
+        description: error.message || "Invalid credentials or insufficient permissions",
         variant: "destructive",
       });
     } finally {
@@ -199,6 +200,16 @@ const StaffLogin = () => {
                 >
                   <RefreshCcw className="h-4 w-4" />
                   <span>Reset Data</span>
+                </Button>
+                
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={createSuperAdmin} 
+                  className="flex items-center gap-1"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Create Super Admin</span>
                 </Button>
                 
                 <Link to="/cashier-register" className="text-sm text-coffee hover:underline flex items-center">
