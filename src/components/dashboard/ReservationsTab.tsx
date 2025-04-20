@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -31,10 +32,10 @@ import { Calendar } from 'lucide-react';
 import { DatePicker } from "@/components/ui/date-picker"
 import { useToast } from "@/hooks/use-toast"
 import {
-  getReservations,
+  getAllReservations,
   createReservation,
   updateReservationStatus,
-  deleteReservation,
+  cancelReservation,
   Reservation
 } from '@/data/reservationData';
 import { createNotification } from '@/data/notificationsData';
@@ -51,6 +52,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -61,7 +63,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   const fetchReservations = async () => {
     try {
       setIsLoading(true);
-      const reservationsData = await getReservations();
+      const reservationsData = await getAllReservations();
       setReservations(reservationsData);
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -78,10 +80,10 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
   const handleCreateReservation = async () => {
     try {
       setIsLoading(true);
-      if (!reservationDate || !reservationTime || !customerName || !customerEmail) {
+      if (!reservationDate || !reservationTime || !customerName || !customerEmail || !customerPhone) {
         toast({
           title: "Error",
-          description: "Please fill in all fields",
+          description: "Please fill in all required fields",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -89,13 +91,15 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
       }
 
       const newReservation = {
-        reservationDate: format(reservationDate, 'yyyy-MM-dd'),
-        reservationTime: reservationTime,
-        numberOfGuests: numberOfGuests,
-        customerName: customerName,
-        customerEmail: customerEmail,
-        status: 'pending',
-        userId: '1', // Default User ID
+        userId: "1", // Default User ID as string
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone,
+        date: format(reservationDate, 'yyyy-MM-dd'),
+        time: reservationTime,
+        guests: numberOfGuests,
+        tableId: 1, // Default value
+        specialRequests: ""
       };
 
       await createReservation(newReservation);
@@ -106,6 +110,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
       setNumberOfGuests(1);
       setCustomerName('');
       setCustomerEmail('');
+      setCustomerPhone('');
 
       toast({
         title: "Success",
@@ -125,27 +130,29 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
 
   const handleApproveReservation = async (id: number) => {
     try {
-      const updatedReservation = await updateReservationStatus(id, 'approved');
+      const updatedReservation = await updateReservationStatus(id, 'confirmed');
       
-      // Create notification for the user
-      await createNotification({
-        user_id: updatedReservation.userId,
-        title: "Reservation Approved",
-        message: `Your reservation for ${format(new Date(updatedReservation.reservationDate), 'PP')} at ${updatedReservation.reservationTime} has been approved.`,
-        type: "reservation",
-        status: "unread"
-      });
+      if (updatedReservation) {
+        // Create notification for the user
+        await createNotification({
+          user_id: updatedReservation.userId,
+          title: "Reservation Confirmed",
+          message: `Your reservation for ${format(new Date(updatedReservation.date), 'PP')} at ${updatedReservation.time} has been confirmed.`,
+          type: "reservation",
+          status: "unread"
+        });
+      }
       
       fetchReservations();
       
       toast({
         title: "Success",
-        description: "Reservation approved successfully",
+        description: "Reservation confirmed successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to approve reservation",
+        description: "Failed to confirm reservation",
         variant: "destructive",
       });
     }
@@ -153,27 +160,30 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
 
   const handleRejectReservation = async (id: number) => {
     try {
-      const updatedReservation = await updateReservationStatus(id, 'rejected');
+      await cancelReservation(id);
+      const reservation = reservations.find(r => r.id === id);
       
-      // Create notification for the user
-      await createNotification({
-        user_id: updatedReservation.userId,
-        title: "Reservation Rejected",
-        message: `Your reservation for ${format(new Date(updatedReservation.reservationDate), 'PP')} at ${updatedReservation.reservationTime} could not be accommodated at this time.`,
-        type: "reservation",
-        status: "unread"
-      });
+      if (reservation) {
+        // Create notification for the user
+        await createNotification({
+          user_id: reservation.userId,
+          title: "Reservation Cancelled",
+          message: `Your reservation for ${format(new Date(reservation.date), 'PP')} at ${reservation.time} has been cancelled.`,
+          type: "reservation",
+          status: "unread"
+        });
+      }
       
       fetchReservations();
       
       toast({
         title: "Success",
-        description: "Reservation rejected successfully",
+        description: "Reservation cancelled successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to reject reservation",
+        description: "Failed to cancel reservation",
         variant: "destructive",
       });
     }
@@ -181,16 +191,18 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
 
   const handleCompleteReservation = async (id: number) => {
     try {
-      const updatedReservation = await updateReservationStatus(id, 'completed');
+      const updatedReservation = await updateReservationStatus(id, 'finished');
       
-      // Create notification for the user
-      await createNotification({
-        user_id: updatedReservation.userId,
-        title: "Thank You for Visiting",
-        message: `Thank you for dining with us. We hope you enjoyed your experience and look forward to serving you again soon!`,
-        type: "reservation",
-        status: "unread"
-      });
+      if (updatedReservation) {
+        // Create notification for the user
+        await createNotification({
+          user_id: updatedReservation.userId,
+          title: "Thank You for Visiting",
+          message: `Thank you for dining with us. We hope you enjoyed your experience and look forward to serving you again soon!`,
+          type: "reservation",
+          status: "unread"
+        });
+      }
       
       fetchReservations();
       
@@ -209,7 +221,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
 
   const handleDeleteReservation = async (id: number) => {
     try {
-      await deleteReservation(id);
+      await cancelReservation(id);
       fetchReservations();
       toast({
         title: "Success",
@@ -289,6 +301,16 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
                   placeholder="johndoe@example.com"
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Customer Phone</Label>
+                <Input
+                  type="tel"
+                  id="phone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="555-123-4567"
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>
@@ -330,11 +352,11 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
                 <TableBody>
                   {reservations.map((reservation) => (
                     <TableRow key={reservation.id}>
-                      <TableCell>{format(new Date(reservation.reservationDate), 'PP')}</TableCell>
-                      <TableCell>{reservation.reservationTime}</TableCell>
-                      <TableCell>{reservation.numberOfGuests}</TableCell>
-                      <TableCell>{reservation.customerName}</TableCell>
-                      <TableCell>{reservation.customerEmail}</TableCell>
+                      <TableCell>{format(new Date(reservation.date), 'PP')}</TableCell>
+                      <TableCell>{reservation.time}</TableCell>
+                      <TableCell>{reservation.guests}</TableCell>
+                      <TableCell>{reservation.name}</TableCell>
+                      <TableCell>{reservation.email}</TableCell>
                       <TableCell>{reservation.status}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -356,7 +378,7 @@ const ReservationsTab: React.FC<ReservationsTabProps> = ({ userRole }) => {
                               </Button>
                             </>
                           )}
-                          {userRole === 'admin' && reservation.status === 'approved' && (
+                          {userRole === 'admin' && reservation.status === 'confirmed' && (
                             <Button
                               variant="default"
                               size="sm"
