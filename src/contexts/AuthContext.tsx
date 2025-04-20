@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from '@/hooks/use-toast';
-import { User } from '@/data/userData';
+import { User } from '@supabase/supabase-js';
+import { Tables } from '@/integrations/supabase/types';
 
 interface AuthContextType {
   user: User | null;
+  profile: Tables['profiles'] | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -20,14 +21,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user: supabaseUser, loading } = useSupabaseAuth();
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Tables['profiles'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function getProfile() {
-      if (!supabaseUser) {
-        setUser(null);
+      if (!user) {
+        setProfile(null);
         setIsLoading(false);
         return;
       }
@@ -36,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', supabaseUser.id)
+          .eq('id', user.id)
           .single();
 
         if (error) throw error;
@@ -44,13 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data?.role === 'cashier' && data?.status !== 'approved') {
           await supabase.auth.signOut();
           setUser(null);
+          setProfile(null);
           toast({
             title: "Account Pending",
             description: "Your account requires approval from a super admin.",
             variant: "destructive",
           });
         } else {
-          setUser(data);
+          setProfile(data);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -60,11 +62,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     getProfile();
-  }, [supabaseUser]);
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -85,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
       setUser(null);
+      setProfile(null);
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
@@ -102,36 +105,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Helper functions to check user roles
   const isStaff = (user: User | null): boolean => {
     if (!user) return false;
-    return ['admin', 'cashier', 'super_admin'].includes(user.role);
+    return profile?.role === 'admin' || profile?.role === 'cashier' || profile?.role === 'super_admin';
   };
 
   const isSuperAdmin = (user: User | null): boolean => {
     if (!user) return false;
-    return user.role === 'super_admin';
+    return profile?.role === 'super_admin';
   };
 
   const isAdmin = (user: User | null): boolean => {
     if (!user) return false;
-    return user.role === 'admin';
+    return profile?.role === 'admin';
   };
 
   const isCashier = (user: User | null): boolean => {
     if (!user) return false;
-    return user.role === 'cashier';
+    return profile?.role === 'cashier';
   };
 
   const isCustomer = (user: User | null): boolean => {
     if (!user) return false;
-    return user.role === 'customer';
+    return profile?.role === 'customer';
   };
+
+  // Set up auth state listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <AuthContext.Provider 
       value={{
         user,
+        profile,
         login,
         logout,
-        isLoading: isLoading || loading,
+        isLoading,
         isStaff,
         isSuperAdmin,
         isAdmin,

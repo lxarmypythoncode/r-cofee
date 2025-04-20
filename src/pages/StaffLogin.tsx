@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { authenticateUser, resetAllUserData } from '@/data/userData';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,10 +10,10 @@ import { Coffee, Key, ArrowLeft, RefreshCcw, ShieldCheck } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const StaffLogin = () => {
-  const { user, login } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('super_admin@rcoffee.com'); // Pre-filled for testing
-  const [password, setPassword] = useState('admin123'); // Pre-filled for testing
+  const [email, setEmail] = useState('super_admin@rcoffee.com');
+  const [password, setPassword] = useState('admin123');
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isPendingCashier, setIsPendingCashier] = useState(false);
@@ -24,14 +23,32 @@ const StaffLogin = () => {
     return <Navigate to="/dashboard" />;
   }
 
-  const resetData = () => {
-    resetAllUserData();
-    toast({
-      title: "Data Reset",
-      description: "All user data has been reset to defaults.",
-    });
-    setLoginError(null);
-    setIsPendingCashier(false);
+  const resetData = async () => {
+    try {
+      // Delete existing users and reset data
+      const { data: { users }, error: fetchError } = await supabase.auth.admin.listUsers();
+      
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      for (const user of users) {
+        await supabase.auth.admin.deleteUser(user.id);
+      }
+
+      // Re-create default users if needed
+      toast({
+        title: "Data Reset",
+        description: "All user data has been reset.",
+      });
+    } catch (error) {
+      console.error('Reset data error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset data",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,31 +68,23 @@ const StaffLogin = () => {
     setIsLoading(true);
     
     try {
-      // For debug purposes
-      console.log("Attempting to login with:", email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      const user = await authenticateUser(email, password);
-      console.log("Authentication result:", user);
+      if (error) throw error;
       
-      if (user) {
-        // Check if the user is a cashier with pending status
-        if (user.role === 'cashier' && user.status === 'pending') {
-          setIsPendingCashier(true);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (user.role === 'admin' || user.role === 'cashier' || user.role === 'super_admin') {
-          login(user);
-          navigate('/dashboard');
-        } else {
-          setLoginError("Invalid credentials or insufficient permissions");
-          toast({
-            title: "Login Failed",
-            description: "Invalid credentials or insufficient permissions",
-            variant: "destructive",
-          });
-        }
+      // Check profile status after successful login
+      if (profile?.role === 'cashier' && profile?.status === 'pending') {
+        setIsPendingCashier(true);
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+      
+      if (['admin', 'cashier', 'super_admin'].includes(profile?.role || '')) {
+        navigate('/dashboard');
       } else {
         setLoginError("Invalid credentials or insufficient permissions");
         toast({
