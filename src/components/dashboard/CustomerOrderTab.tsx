@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,10 +31,13 @@ const CustomerOrderTab: React.FC<CustomerOrderTabProps> = ({ userId }) => {
     
     const fetchOrders = async () => {
       try {
+        setIsLoading(true);
         const userOrders = await getUserOrders(userId);
         setOrders(userOrders);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     

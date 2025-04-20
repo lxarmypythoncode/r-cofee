@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +31,7 @@ import { toast } from '@/hooks/use-toast';
 import { getUsersByRole, getPendingUsers, approveUser, deleteUser } from '@/data/userData';
 import { User } from '@/data/userData';
 import { UserCheck, UserX, UserPlus, Trash2, Edit, Plus } from 'lucide-react';
-import { menuItems, MenuItem } from '@/data/menuData';
+import { menuItems, MenuItem, getMenuItems } from '@/data/menuData';
 
 const SuperAdminTab = () => {
   const [pendingCashiers, setPendingCashiers] = useState<User[]>([]);
@@ -68,8 +67,15 @@ const SuperAdminTab = () => {
     }
   };
 
-  const fetchProducts = () => {
-    setProducts(menuItems);
+  const fetchProducts = async () => {
+    try {
+      const items = await getMenuItems();
+      setProducts(items);
+    } catch (error) {
+      // Fallback to local data if API fails
+      setProducts(menuItems);
+      console.error('Error fetching menu items:', error);
+    }
   };
 
   const handleApproveCashier = async (userId: number) => {

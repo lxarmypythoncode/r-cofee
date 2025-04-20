@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@/data/userData';
 
 export interface Notification {
   id: string;
@@ -24,7 +23,10 @@ export const getUserNotifications = async (userId: string): Promise<Notification
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(notification => ({
+    ...notification,
+    status: notification.status as 'read' | 'unread'
+  }));
 };
 
 export const markNotificationAsRead = async (id: string) => {

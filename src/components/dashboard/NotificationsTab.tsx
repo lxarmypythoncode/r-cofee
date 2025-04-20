@@ -1,270 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { createNotification } from '@/data/notificationsData';
-import { getAllReservations, Reservation } from '@/data/reservationData';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+import { getAllUsers } from '@/data/userData';
+import { createNotification } from '@/data/notificationsData';
+import { User } from '@/data/userData';
 
-interface NotificationsTabProps {
-  userRole: string;
-}
-
-const NotificationsTab: React.FC<NotificationsTabProps> = ({ userRole }) => {
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedReservation, setSelectedReservation] = useState('');
-  const [customers, setCustomers] = useState<{ id: string; name: string; email: string }[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+const NotificationsTab = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
-        const reservationData = await getAllReservations();
-        setReservations(reservationData);
-        
-        const uniqueCustomers = reservationData.reduce<{ id: string; name: string; email: string }[]>((acc, reservation) => {
-          if (!acc.some(c => c.id === reservation.userId)) {
-            acc.push({
-              id: reservation.userId,
-              name: reservation.name,
-              email: reservation.email
-            });
-          }
-          return acc;
-        }, []);
-        
-        setCustomers(uniqueCustomers);
+        const usersData = await getAllUsers();
+        setUsers(usersData);
       } catch (error) {
+        console.error('Error fetching users:', error);
         toast({
           title: "Error",
-          description: "Failed to load data",
+          description: "Failed to fetch users",
           variant: "destructive",
         });
       }
     };
 
-    fetchData();
+    fetchUsers();
   }, []);
 
-  const handleSendNotification = async (e: React.FormEvent) => {
+  const sendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title || !message || !selectedUserId) {
-      toast({
-        title: "Error",
-        description: "Please fill all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
+    setIsSending(true);
+
     try {
+      // Validate form
+      if (!selectedUser || !notificationTitle.trim() || !notificationMessage.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in all fields",
+          variant: "destructive",
+        });
+        setIsSending(false);
+        return;
+      }
+
+      // Create the notification
       await createNotification({
-        userId: selectedUserId,
-        title,
-        message,
-        type: 'system',
+        user_id: selectedUser,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: 'admin',
         status: 'unread'
       });
+
+      // Reset form and show success message
+      setSelectedUser('');
+      setNotificationTitle('');
+      setNotificationMessage('');
+      setIsSending(false);
       
       toast({
         title: "Success",
         description: "Notification sent successfully",
       });
-      
-      setTitle('');
-      setMessage('');
-      setSelectedUserId('');
     } catch (error) {
+      console.error('Error sending notification:', error);
+      setIsSending(false);
       toast({
         title: "Error",
         description: "Failed to send notification",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const sendPromotion = () => {
-    setTitle('Special Weekend Offer!');
-    setMessage('Enjoy 20% off on all specialty coffee drinks this weekend. Show this notification to your server to redeem.');
-  };
-
-  const sendReminder = () => {
-    setTitle('Reservation Reminder');
-    setMessage('This is a friendly reminder about your upcoming reservation. We look forward to serving you soon!');
-  };
-
-  const sendAvailabilityUpdate = () => {
-    setTitle('Reservation Availability Update');
-    setMessage('We want to inform you that we have limited seating available on your reservation date. Please confirm your attendance or reschedule if needed.');
-  };
-
-  const handleReservationSelect = (reservationId: string) => {
-    if (!reservationId) return;
-    
-    const reservation = reservations.find(r => r.id.toString() === reservationId);
-    if (reservation) {
-      setSelectedUserId(reservation.userId);
-      setTitle(`Update on Your Reservation for ${format(parseISO(reservation.date), 'MMM dd')}`);
-      setMessage(`Regarding your reservation for ${reservation.guests} guests on ${format(parseISO(reservation.date), 'MMMM dd, yyyy')} at ${reservation.time}: `);
     }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">Send Notifications</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>New Notification</CardTitle>
-            <CardDescription>
-              Send a notification to a customer about their reservation or promotions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSendNotification} className="space-y-4">
-              {userRole === 'cashier' && (
-                <div className="space-y-2">
-                  <Label htmlFor="reservation">Select a Reservation</Label>
-                  <Select 
-                    value={selectedReservation} 
-                    onValueChange={(value) => {
-                      setSelectedReservation(value);
-                      handleReservationSelect(value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a reservation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Upcoming Reservations</SelectLabel>
-                        {reservations
-                          .filter(r => r.status === 'pending' || r.status === 'confirmed')
-                          .map(reservation => (
-                            <SelectItem key={reservation.id} value={String(reservation.id)}>
-                              {reservation.name} - {format(parseISO(reservation.date), 'MMM dd')} at {reservation.time}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="customer">Customer</Label>
-                <Select 
-                  value={selectedUserId} 
-                  onValueChange={setSelectedUserId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Customers</SelectLabel>
-                      {customers.map(customer => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                          {customer.name} ({customer.email})
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Notification title"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Notification message"
-                  rows={5}
-                  required
-                />
-              </div>
-              
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? "Sending..." : "Send Notification"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Templates</CardTitle>
-            <CardDescription>
-              Quick notification templates
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              onClick={sendPromotion}
-            >
-              Special Promotion
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              onClick={sendReminder}
-            >
-              Reservation Reminder
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              onClick={sendAvailabilityUpdate}
-            >
-              Availability Update
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Send Notification</CardTitle>
+        <CardDescription>
+          Send a notification to a specific user
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={sendNotification} className="space-y-4">
+          <div>
+            <Label htmlFor="user">Select User</Label>
+            <Select onValueChange={setSelectedUser}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a user" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={String(user.id)}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="title">Notification Title</Label>
+            <Input
+              id="title"
+              type="text"
+              value={notificationTitle}
+              onChange={(e) => setNotificationTitle(e.target.value)}
+              placeholder="Enter title"
+            />
+          </div>
+          <div>
+            <Label htmlFor="message">Notification Message</Label>
+            <Input
+              id="message"
+              type="text"
+              value={notificationMessage}
+              onChange={(e) => setNotificationMessage(e.target.value)}
+              placeholder="Enter message"
+            />
+          </div>
+          <Button type="submit" disabled={isSending}>
+            {isSending ? 'Sending...' : 'Send Notification'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

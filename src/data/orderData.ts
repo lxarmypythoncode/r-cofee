@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface OrderItem {
   menuItemId: number;
@@ -30,9 +31,12 @@ export const getUserOrders = async (userId: string): Promise<UserOrder[]> => {
   }
 
   return (data || []).map(order => ({
-    ...order,
+    id: order.id,
     userId: order.user_id,
-    createdAt: order.created_at,
+    items: order.items as unknown as OrderItem[],
+    total: order.total,
+    status: order.status as UserOrder['status'],
+    createdAt: order.created_at
   }));
 };
 
@@ -48,9 +52,12 @@ export const getAllOrders = async (): Promise<UserOrder[]> => {
   }
 
   return (data || []).map(order => ({
-    ...order,
+    id: order.id,
     userId: order.user_id,
-    createdAt: order.created_at,
+    items: order.items as unknown as OrderItem[],
+    total: order.total,
+    status: order.status as UserOrder['status'],
+    createdAt: order.created_at
   }));
 };
 
@@ -59,9 +66,9 @@ export const createOrder = async (orderData: Omit<UserOrder, 'id' | 'createdAt'>
     .from('orders')
     .insert({
       user_id: orderData.userId,
-      items: orderData.items,
+      items: orderData.items as unknown as Json,
       total: orderData.total,
-      status: orderData.status,
+      status: orderData.status
     })
     .select()
     .single();
@@ -72,9 +79,12 @@ export const createOrder = async (orderData: Omit<UserOrder, 'id' | 'createdAt'>
   }
 
   return {
-    ...data,
+    id: data.id,
     userId: data.user_id,
-    createdAt: data.created_at,
+    items: data.items as unknown as OrderItem[],
+    total: data.total,
+    status: data.status as UserOrder['status'],
+    createdAt: data.created_at
   };
 };
 
@@ -95,8 +105,11 @@ export const updateOrderStatus = async (
   }
 
   return {
-    ...data,
+    id: data.id,
     userId: data.user_id,
-    createdAt: data.created_at,
+    items: data.items as unknown as OrderItem[],
+    total: data.total,
+    status: data.status as UserOrder['status'],
+    createdAt: data.created_at
   };
 };

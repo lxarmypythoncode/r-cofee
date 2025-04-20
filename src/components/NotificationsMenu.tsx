@@ -93,7 +93,7 @@ const NotificationsMenu = () => {
                 <div className="flex justify-between items-start">
                   <h4 className="font-medium text-sm">{notification.title}</h4>
                   <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                   </span>
                 </div>
                 <p className="text-sm mt-1 text-muted-foreground">{notification.message}</p>

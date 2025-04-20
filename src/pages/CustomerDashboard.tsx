@@ -70,7 +70,6 @@ const CustomerDashboard = () => {
   }
 
   return (
-    
     <div className="container mx-auto py-6">
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/6">
@@ -151,7 +150,7 @@ const CustomerDashboard = () => {
                           <div className="flex justify-between items-start">
                             <h3 className="font-medium">{notification.title}</h3>
                             <span className="text-xs text-muted-foreground">
-                              {format(new Date(notification.createdAt), 'MMM dd, yyyy - h:mm a')}
+                              {format(new Date(notification.created_at), 'MMM dd, yyyy - h:mm a')}
                             </span>
                           </div>
                           <p className="mt-2 text-muted-foreground">{notification.message}</p>
