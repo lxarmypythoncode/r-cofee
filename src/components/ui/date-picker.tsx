@@ -1,8 +1,7 @@
 
 import * as React from "react"
-import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-
+import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -14,8 +13,8 @@ import {
 
 interface DatePickerProps {
   id?: string;
-  mode?: "single" | "multiple" | "range";
-  selected?: Date | Date[] | undefined;
+  mode?: "single";  // Restrict to single mode only since that's what we use
+  selected?: Date | undefined;
   onSelect?: (date: Date | undefined) => void;
   className?: string;
 }
@@ -40,16 +39,15 @@ export function DatePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selected instanceof Date ? format(selected, "PPP") : <span>Pick a date</span>}
+          {selected ? format(selected, "PPP") : <span>Pick a date</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
-          mode={mode}
+          mode="single"
           selected={selected}
           onSelect={onSelect}
           initialFocus
-          className="pointer-events-auto"
         />
       </PopoverContent>
     </Popover>
