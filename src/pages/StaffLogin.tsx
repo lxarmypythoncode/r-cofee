@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,14 +19,12 @@ const StaffLogin = () => {
   const [isPendingCashier, setIsPendingCashier] = useState(false);
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
 
-  // If already logged in, redirect to dashboard
   if (user) {
     return <Navigate to="/dashboard" />;
   }
 
   const resetData = async () => {
     try {
-      // For now, just show a notification as we can't directly manage Supabase users
       toast({
         title: "Note",
         description: "This would reset data in a real application.",
@@ -46,7 +43,6 @@ const StaffLogin = () => {
     setIsLoading(true);
     setIsCreatingAdmin(true);
     try {
-      // Create super admin user through sign up with a valid email domain
       const { data, error } = await supabase.auth.signUp({
         email: 'admin@example.com',
         password: 'admin123',
@@ -59,7 +55,6 @@ const StaffLogin = () => {
       });
       
       if (error) {
-        // Check if it's already registered error
         if (error.message.includes("already registered")) {
           toast({
             title: "Account Exists",
@@ -112,11 +107,9 @@ const StaffLogin = () => {
     try {
       await login(email, password);
       
-      // Login successful - redirect happens via the useAuth hook when user state changes
     } catch (error: any) {
       console.error("Login error:", error);
       
-      // Show a more helpful error message
       let errorMessage = error.message || "An error occurred during login";
       
       if (errorMessage.includes("Invalid login credentials")) {
